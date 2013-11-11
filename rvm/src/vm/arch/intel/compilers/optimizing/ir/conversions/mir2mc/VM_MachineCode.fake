@@ -1,0 +1,11 @@
+/*
+ * (C) Copyright IBM Corp. 2001
+ */
+//$Id: VM_MachineCode.fake,v 1.3 2003/07/25 17:34:20 dgrove-oss Exp $
+package com.ibm.JikesRVM;
+/**
+ * @author Dave Grove 
+ */
+class VM_MachineCode {
+  VM_MachineCode(VM_CodeArray x, int[] y) {} 
+}

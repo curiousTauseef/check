@@ -1,0 +1,117 @@
+/*
+ * (C) Copyright IBM Corp 2001,2002
+ */
+package org.mmtk.utility;
+
+import org.mmtk.utility.gcspy.drivers.TreadmillDriver;
+import org.mmtk.utility.Constants;
+
+import org.vmmagic.unboxed.*;
+import org.vmmagic.pragma.*;
+
+/**
+ * FIXME The DoublyLinkedList class, upon which this depends, must be
+ * re-written as it makes the assumption that the implementation
+ * language (Java) and the language being implemented are the same.
+ * This is true in the case of Jikes RVM, but it is not true for any
+ * VM implementing a language other than Java.
+ *
+ * Each instance of this class is a doubly-linked list, in which
+ * each item or node is a piece of memory.  The first two words of each node
+ * contains the forward and backward links.  The third word contains
+ * the treadmill.  The remaining portion is the payload.
+ *  
+ * The treadmill object itself must not be moved.
+ *
+ * Access to the instances may be synchronized depending on the constructor argument.
+ *
+ * @author Perry Cheng
+ * @version $Revision: 1.14 $
+ * @date $Date: 2005/01/19 02:49:03 $
+ */
+public final class Treadmill
+  implements Constants, Uninterruptible {
+  public final static String Id = "$Id: Treadmill.java,v 1.14 2005/01/19 02:49:03 steveb-oss Exp $"; 
+
+  /****************************************************************************
+   *
+   * Class variables
+   */
+
+  /****************************************************************************
+   *
+   * Instance variables
+   */
+  private DoublyLinkedList fromSpace;
+  private DoublyLinkedList toSpace;
+
+  /****************************************************************************
+   *
+   * Instance Methods
+   */
+
+  /**
+   * Constructor
+   */
+  public Treadmill (int granularity, boolean shared) {
+    fromSpace = new DoublyLinkedList (granularity, shared, this); 
+    toSpace = new DoublyLinkedList (granularity, shared, this); 
+  }
+
+  static public final Treadmill getTreadmill (Address node) {
+    return (Treadmill) DoublyLinkedList.getOwner(node);
+  }
+
+  static public final int headerSize() throws InlinePragma {
+    return DoublyLinkedList.headerSize();
+  }
+
+  static public final Address nodeToPayload(Address payload) throws InlinePragma {
+    return DoublyLinkedList.nodeToPayload(payload);
+  }
+
+  static public final Address payloadToNode(Address payload) throws InlinePragma {
+    return DoublyLinkedList.payloadToNode(payload);
+  }
+
+  static public final Address midPayloadToNode(Address payload) throws InlinePragma {
+    return DoublyLinkedList.midPayloadToNode(payload);
+  }
+
+  public final void addToFromSpace (Address node) throws InlinePragma {
+    fromSpace.add(node);
+  }
+
+  public final Address popFromSpace () throws InlinePragma {
+    return fromSpace.pop();
+  }
+
+  public final void copy (Address node) throws InlinePragma { 
+    fromSpace.remove(node);
+    toSpace.add(node);
+  }
+
+  public final boolean toSpaceEmpty () throws InlinePragma {
+    return toSpace.isEmpty();
+  }
+
+  public final void flip() {  
+    DoublyLinkedList tmp = fromSpace;
+    fromSpace = toSpace;
+    toSpace = tmp;
+  }
+
+  /**
+   * Gather data for GCSpy
+   * @param event the gc event
+   * @param tmDriver the GCSpy space driver
+   * @param tospace gather from tospace?
+   */
+  public void gcspyGatherData(int event, TreadmillDriver tmDriver, boolean tospace) {
+    if (tospace) 
+      toSpace.gcspyGatherData(tmDriver);
+    else
+      fromSpace.gcspyGatherData(tmDriver);
+  }
+
+}

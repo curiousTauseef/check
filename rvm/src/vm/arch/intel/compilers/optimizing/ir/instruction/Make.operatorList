@@ -1,0 +1,8 @@
+#
+# (C) Copyright IBM Corp. 2004
+#
+#$Id: Make.operatorList,v 1.1 2004/09/03 13:18:00 dgrove-oss Exp $
+#
+# @author David Grove
+
+ARCH_OPS = $(ARCH_IR_DIR)/OperatorList.dat 

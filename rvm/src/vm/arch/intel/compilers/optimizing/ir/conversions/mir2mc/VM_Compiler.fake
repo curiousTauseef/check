@@ -1,0 +1,10 @@
+/*
+ * (C) Copyright IBM Corp. 2003
+ */
+//$Id: VM_Compiler.fake,v 1.1 2003/05/30 01:01:07 dgrove-oss Exp $
+package com.ibm.JikesRVM;
+/**
+ * @author Dave Grove
+ */
+class VM_Compiler {
+}

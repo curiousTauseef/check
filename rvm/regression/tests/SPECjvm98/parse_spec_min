@@ -1,0 +1,18 @@
+#
+# (C) Copyright IBM Corp. 2001
+#
+# $Id: parse_spec_min,v 1.1 2002/05/23 02:28:25 hind-oss Exp $
+#
+# @author Michael Hind
+#
+
+# This script extracts the first running time from a
+# SPEC output file called "tmp"
+
+eval "exec perl $0 $*"
+	if 0;
+open(INPUT,"tmp");
+$line=<INPUT>;
+($junk1,$junk2,$junk3,$junk4,$time,$junk5) = split(/ /,$line);
+close(INPUT);
+print "$time";

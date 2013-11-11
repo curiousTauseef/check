@@ -1,0 +1,11 @@
+/*
+ * (C) Copyright IBM Corp. 2002
+ */
+//$Id: NoInlinePragma.fake,v 1.1 2004/09/09 06:40:50 steveb-oss Exp $
+package org.vmmagic.pragma; 
+
+/**
+ * @author Dave Grove
+ */
+public class NoInlinePragma extends RuntimeException {
+}

@@ -1,0 +1,30 @@
+/*
+ * (C) Copyright IBM Corp. 2003
+ */
+//$Id: VM_CodeArray.fake,v 1.3 2005/01/27 13:20:09 dgrove-oss Exp $
+package com.ibm.JikesRVM;
+
+/**
+ * @author Dave Grove
+ */
+public final class VM_CodeArray {
+  private byte [] data;
+
+  public byte get (int index) {
+    return data[index];
+  }
+
+  public void set (int index, byte v) {
+    data[index] = v;
+  }
+
+  public int length() {
+    return data.length;
+  }
+
+  public static class Factory {
+    public static VM_CodeArray create(int numInstrs, boolean isHot) {
+      return null;
+    }
+  }
+}

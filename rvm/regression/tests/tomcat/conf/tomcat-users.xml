@@ -1,0 +1,13 @@
+<!-- 
+  (C) Copyright IBM Corp. 2001
+
+  $Id: tomcat-users.xml,v 1.2 2001/11/06 21:44:20 pfs-oss Exp $
+
+  @author Julian Dolby
+-->
+<tomcat-users>
+  <user name="tomcat" password="tomcat" roles="tomcat" />
+  <user name="role1"  password="tomcat" roles="role1"  />
+  <user name="both"   password="tomcat" roles="tomcat,role1" />
+  <user name="root"   password="tomcat" roles="tomcat,role1,admin" />
+</tomcat-users>

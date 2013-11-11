@@ -1,0 +1,21 @@
+#! /usr/bin/perl
+
+# (C) Copyright IBM Corp. 2002
+# @author David Hovemeyer
+# $Id: printcp,v 1.2 2002/10/29 21:47:58 dolby-oss Exp $
+
+# Read files from stdin, and combine them into a path
+# string that can be used as a classpath.
+
+my $BASEDIR = shift @ARGV;
+(defined $BASEDIR) || die;
+
+my $cp;
+while (<>) {
+    chop;
+    s,^\./,,;
+    $cp = "$BASEDIR/$_:$cp";
+}
+
+chop $cp;
+print "$cp\n";

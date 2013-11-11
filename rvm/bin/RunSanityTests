@@ -1,0 +1,10 @@
+#! /bin/bash
+#
+# (C) Copyright IBM Corp. 2001, 2003
+#
+# $Id: RunSanityTests,v 1.4 2003/06/06 23:26:33 augart-oss Exp $
+#
+# @author Steve Fink
+# @modified Steven Augart
+#
+exec "$RVM_ROOT/rvm/regression/RunSanityTests" "$@"

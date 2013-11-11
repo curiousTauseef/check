@@ -1,0 +1,12 @@
+# -*-makefile-*-
+# (C) Copyright IBM Corp. 2001, 2005
+#
+# $Id: Makefile.syswrap,v 1.6 2005/02/18 19:05:07 saugart Exp $
+#
+# @author David Hovemeyer
+#
+include			$(JAL_BUILD)/Make.rules.target
+CXXFLAGS+=-Wno-unused-parameter
+
+$(DEST):		syswrap.C syswrap.h
+	$(LDSHARED) -nostartfiles -Wl,--export-dynamic -o $@ -I$(JAL_ROOT)/rvm/src/include -I$(JAL_BUILD)/RVM.scratch $<

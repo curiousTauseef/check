@@ -1,0 +1,14 @@
+/* (C) Copyright IBM Corp. 2001, 2003 */
+/* @author unascribed */
+/* $Id: testSimple.preprocessor,v 1.2 2003/07/25 15:36:19 augart-oss Exp $ */
+
+
+//-#if X
+x1
+//-#elif Y
+y
+//-#elif X
+x2
+//-#else
+z
+//-#endif

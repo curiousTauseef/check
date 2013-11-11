@@ -1,0 +1,23 @@
+//$Id: Word.fake,v 1.2 2005/02/27 20:57:15 dgrove-oss Exp $
+/*
+ * (C) Copyright IBM Corp. 2005
+ */
+package org.vmmagic.unboxed;
+
+/**
+ * @author Kris Venstermans 
+ */
+public class Word {
+  public Word rsha (int sh) {
+    return null;
+  }
+  
+  public boolean isZero() {
+    return true;
+  }
+
+  public boolean isMax() {
+    return true;
+  }
+
+}
