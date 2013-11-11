@@ -40,6 +40,9 @@ public class Plan extends NoGC implements Uninterruptible {
 public class Plan extends GCTrace implements Uninterruptible {
 //-#elif RVM_WITH_SEMI_SPACE_GC_SPY
 public class Plan extends SemiSpaceGCspy implements Uninterruptible {
+//Jfree extension:
+//-#elif RVM_WITH_FREE_PLAN
+public class Plan extends MallocFree implements Uninterruptible {
 //-#endif
 
   /***********************************************************************

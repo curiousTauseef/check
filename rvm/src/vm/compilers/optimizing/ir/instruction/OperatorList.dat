@@ -1608,6 +1608,13 @@ branch
 
 
 
+# JFREE Extension
+FREE
+FreeObject
+none
+
+
+
 # NOT a real opcode, but rather a marker for template generation
 ARCH_INDEPENDENT_END
 Unassigned

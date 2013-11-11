@@ -51,6 +51,8 @@ public class VM_Entrypoints implements VM_Constants {
   public static final VM_NormalMethod resolvedNewArrayMethod   = getMethod("Lcom/ibm/JikesRVM/VM_Runtime;", "resolvedNewArray", "(III[Ljava/lang/Object;III)Ljava/lang/Object;");
   public static final VM_NormalMethod newArrayArrayMethod   = getMethod("Lcom/ibm/JikesRVM/VM_MultianewarrayHelper;", "newArrayArray", "(IIII)Ljava/lang/Object;");
 
+  // JFREE Extension
+  public static final VM_NormalMethod freeMethod             = getMethod("Lcom/ibm/JikesRVM/VM_Runtime;", "free", "(Ljava/lang/Object;)V");
 
   public static final VM_Field sysWriteLockField     = getField("Lcom/ibm/JikesRVM/VM;", "sysWriteLock", "I");  
   public static final VM_Field intBufferLockField    = getField("Lcom/ibm/JikesRVM/VM_Thread;", "intBufferLock", "I");  

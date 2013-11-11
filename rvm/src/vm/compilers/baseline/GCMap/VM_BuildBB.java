@@ -1314,6 +1314,7 @@ public final class VM_BuildBB
        case JBC_swap :
        case JBC_pop  :
        case JBC_pop2  :
+       case JBC_free:
          {
            currentStackHeight = rearrangeStack(opcode, stack, currentStackHeight);
            break;
@@ -1752,6 +1753,7 @@ public final class VM_BuildBB
            push(OBJECT_TYPE);
            break;
          }
+
         
        case JBC_arraylength :
          {
@@ -1779,6 +1781,40 @@ public final class VM_BuildBB
            break;
          }
           
+         // JREG Extensions 
+       case JBC_new_in_r : 
+         {
+           push(OBJECT_TYPE);
+           break;
+         }
+
+       case JBC_newarray_in_r :
+         {
+           popAndPush(WORD_TYPE, ARRAY_TYPE);
+           break;
+         }
+       case JBC_anewarray_in_r :
+         {
+           popAndPush(WORD_TYPE, ARRAY_TYPE);
+           break;
+         }
+
+       case JBC_multianewarray_in_r :
+         {
+           VM_TypeReference typeRef = bcodes.getTypeReference();
+           int dimensions        = bcodes.getArrayDimension();
+           for (int i=0; i < dimensions; i++)
+             pop (WORD_TYPE);
+           push(OBJECT_TYPE);
+           break;
+         }
+
+         // JFREE Extensions 
+       case JBC_free : 
+         {
+           pop(OBJECT_TYPE);
+           break;
+         }
  
        case 0xba: /* --- unused --- */
          break;
@@ -1916,6 +1952,9 @@ public final class VM_BuildBB
      case JBC_pop2:
        newTop -= 2;
        break;
+     case JBC_free:
+       newTop -= 1;
+       break;
      default:
        newTop = top;
      }
@@ -1996,3 +2035,4 @@ public final class VM_BuildBB
     }
   //-#endif
 }
+//  JREG Extension (please keep this comment for automatic back up)

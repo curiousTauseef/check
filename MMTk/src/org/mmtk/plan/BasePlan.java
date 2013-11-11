@@ -1,6 +1,8 @@
 /*
  * (C) Copyright Department of Computer Science,
  * Australian National University. 2002
+ *
+ * JFREE Extension : counting pages
  */
 package org.mmtk.plan;
 
@@ -912,7 +914,9 @@ public abstract class BasePlan
    *
    * @param value The exit value
    */
-  protected void planExit(int value) {}
+  protected void planExit(int value) {
+      CountPages.printusage();
+	}
 
   /**
    * Specify if the plan has been fully initialized

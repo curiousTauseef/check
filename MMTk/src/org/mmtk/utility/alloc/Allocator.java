@@ -1,4 +1,8 @@
 /*
+ * JREG Extension
+ * MM with explicit deallocation
+ */
+/*
  * (C) Copyright Department of Computer Science,
  * Australian National University. 2002
  */
@@ -93,6 +97,7 @@ public abstract class Allocator implements Constants, Uninterruptible {
     return region.add(delta);
   }
 
+  
   /**
    * Aligns up an allocation request. The allocation request accepts a
    * region, that must be at least particle aligned, an alignment

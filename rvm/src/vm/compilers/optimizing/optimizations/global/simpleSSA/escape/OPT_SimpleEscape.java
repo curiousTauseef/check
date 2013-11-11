@@ -285,6 +285,8 @@ class OPT_SimpleEscape extends OPT_CompilerPhase
       case CHECKCAST_NOTNULL_opcode: case CHECKCAST_UNRESOLVED_opcode:
       case GET_CAUGHT_EXCEPTION_opcode:
       case IR_PROLOGUE_opcode: 
+        // JFREE Extension
+      case FREE_opcode:
         return  false;
       case RETURN_opcode:
         // a return instruction might cause an object to escape,
@@ -458,6 +460,8 @@ class OPT_SimpleEscape extends OPT_CompilerPhase
       case CHECKCAST_NOTNULL_opcode: case CHECKCAST_UNRESOLVED_opcode:
       case GET_CAUGHT_EXCEPTION_opcode:
       case IR_PROLOGUE_opcode: 
+        // JFREE Extension
+      case FREE_opcode:
         return  false;
       case RETURN_opcode:
         // a return instruction causes an object to escape this method.

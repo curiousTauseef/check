@@ -1,0 +1,3 @@
+# JFree  Extension
+. $1/gc/FreeMS
+. $1/compilers/FastAdaptive

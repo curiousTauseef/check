@@ -1,6 +1,8 @@
 /*
  * (C) Copyright Department of Computer Science,
  * Australian National University. 2002
+ *
+ * JFREE Extension : counting pages
  */
 package org.mmtk.plan;
 
@@ -175,16 +177,19 @@ public abstract class Generational extends StopTheWorldGC
    */
   public final Address alloc(int bytes, int align, int offset, int allocator)
     throws InlinePragma {
+    Address result;
     switch (allocator) {
     case  ALLOC_NURSERY: if (Stats.GATHER_MARK_CONS_STATS) nurseryCons.inc(bytes);
-                         return nursery.alloc(bytes, align, offset);
-    case   ALLOC_MATURE: return matureAlloc(bytes, align, offset);
-    case ALLOC_IMMORTAL: return immortal.alloc(bytes, align, offset);
-    case      ALLOC_LOS: return los.alloc(bytes, align, offset);
+                         result = nursery.alloc(bytes, align, offset); break;
+    case   ALLOC_MATURE: result =  matureAlloc(bytes, align, offset); break;
+    case ALLOC_IMMORTAL: result = immortal.alloc(bytes, align, offset); break;
+    case      ALLOC_LOS: result = los.alloc(bytes, align, offset); break;
     default:
       if (Assert.VERIFY_ASSERTIONS) Assert.fail("No such allocator"); 
       return Address.zero();
     }
+    CountPages.updateCount();
+    return result;
   }
 
   /**
@@ -710,4 +715,5 @@ public abstract class Generational extends StopTheWorldGC
     los.show();
     immortal.show();
   }
+
 }

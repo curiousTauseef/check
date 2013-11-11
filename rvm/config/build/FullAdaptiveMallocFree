@@ -1,0 +1,3 @@
+# JFREE
+. $1/gc/MallocFree
+. $1/compilers/FullAdaptive

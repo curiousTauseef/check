@@ -642,6 +642,9 @@ public final class OPT_SSADictionary implements OPT_Operators {
       case PHI_opcode:
         phiHelper(s, b);
         break;
+        // JFREE Extension
+      case FREE_opcode:
+        break;
       default:
         if (!s.isPEI()) {
           System.out.println("SSA dictionary failed on " + s.toString());

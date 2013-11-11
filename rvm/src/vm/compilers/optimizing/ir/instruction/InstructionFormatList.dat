@@ -302,6 +302,50 @@ OsrPoint
 "U InlinedTypeInfo OPT_InlinedOsrTypeInfoOperand"
 "Element OPT_Operand"
 
+# JREG: region based instructions
+CreateHeapRegion
+0 0 1
+"U Region OPT_Operand"
+
+
+CreateStackRegion
+0 0 2
+"U Region OPT_Operand" 
+#>> soon "U Size OPT_RegisterOperand"
+
+
+RemoveRegion
+0 0 1
+"U Region OPT_Operand"
+
+
+PushRegion
+0 0 1
+"U Region OPT_Operand"
+
+
+NewInRegion
+1 0 2
+"D Result OPT_RegisterOperand" "U Type OPT_TypeOperand" "U Region OPT_Operand"
+
+
+NewArrayInRegion
+1 0 3
+"D Result OPT_RegisterOperand" "U Type OPT_TypeOperand" "U Size OPT_Operand" "U Region OPT_Operand"
+
+
+MultianewarrayInRegion
+1 0 2 1 U -1
+"D Result OPT_RegisterOperand" \
+"U Type OPT_TypeOperand"\
+"U Region OPT_Operand"
+"Dimension OPT_Operand"
+
+FreeObject
+0 0 1
+"U ToRemove OPT_RegisterOperand"
+
+
 # Bogus instruction format only used by template generation code.
 ARCH_INDEPENDENT_INSTR_FORMAT_END
 0 0 0 0 0

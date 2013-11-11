@@ -114,4 +114,12 @@ public final class Treadmill
       fromSpace.gcspyGatherData(tmDriver);
   }
 
+
+  /* JFREE Extension */
+  public void removeFromSpace(Address node)
+  throws InlinePragma
+  {
+      fromSpace.remove(node);
+  }
+
 }

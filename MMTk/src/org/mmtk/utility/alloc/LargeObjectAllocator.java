@@ -1,9 +1,15 @@
 /*
+ * JREG Extension
+ * MM with explicit deallocation
+ */
+/*
  * (C) Copyright Department of Computer Science,
  * Australian National University. 2002
  */
 
 package org.mmtk.utility.alloc;
+
+import org.mmtk.plan.CountPages;
 
 import org.mmtk.policy.LargeObjectSpace;
 import org.mmtk.utility.*;
@@ -29,14 +35,17 @@ import org.vmmagic.pragma.*;
  * @version $Revision: 1.23 $
  * @date $Date: 2005/02/04 10:03:08 $
  */
-public abstract class LargeObjectAllocator extends Allocator implements Constants, Uninterruptible {
-  public final static String Id = "$Id: LargeObjectAllocator.java,v 1.23 2005/02/04 10:03:08 steveb-oss Exp $"; 
+public abstract class LargeObjectAllocator extends Allocator 
+    implements Constants, Uninterruptible {
+  public final static String Id = 
+      "$Id: LargeObjectAllocator.java,v 1.23 2005/02/04 10:03:08 steveb-oss Exp $"; 
   
   /****************************************************************************
    *
    * Class variables
    */
-  protected static final Word PAGE_MASK = Word.fromIntSignExtend(~(BYTES_IN_PAGE - 1));
+  protected static final Word PAGE_MASK = 
+      Word.fromIntSignExtend(~(BYTES_IN_PAGE - 1));
 
   /****************************************************************************
    *
@@ -76,8 +85,8 @@ public abstract class LargeObjectAllocator extends Allocator implements Constant
   public final Address alloc(int bytes, int align, int offset) 
     throws NoInlinePragma {
     Address cell = allocSlow(bytes, align, offset, false);
-    postAlloc(cell);
-    return alignAllocation(cell, align, offset);
+    Address ac = alignAllocation(cell, align, offset);
+    return ac;
   }
 
   abstract protected void postAlloc(Address cell);
@@ -97,15 +106,24 @@ public abstract class LargeObjectAllocator extends Allocator implements Constant
    */
   final protected Address allocSlowOnce (int bytes, int align, int offset,
                                             boolean inGC) {
-    int header = superPageHeaderSize() + cellHeaderSize();  //must be multiple of MIN_ALIGNMENT
+    //header must be multiple of MIN_ALIGNMENT
+    int header = superPageHeaderSize() + cellHeaderSize();  
+
     int maxbytes = getMaximumAlignedSize(bytes + header, align);
     int pages = (maxbytes + BYTES_IN_PAGE - 1) >>LOG_BYTES_IN_PAGE;
     Address sp = space.acquire(pages);
     if (sp.isZero()) return sp;
+    if (Assert.VERIFY_ASSERTIONS) Assert._assert(pages == space.size(sp));
     Address cell = sp.add(header);
+    postAlloc(cell);
+
+    /* Jfree statistics */
+    CountPages.alloc(pages << LOG_BYTES_IN_PAGE, true);
+
     return cell;
   }
 
+  
   /****************************************************************************
    *
    * Freeing
@@ -119,9 +137,22 @@ public abstract class LargeObjectAllocator extends Allocator implements Constant
    *
    * @param cell The address of the first byte of the cell to be freed
    */
+
+  public static boolean warningmsg = false;
   public final void free(Address cell)
-    throws InlinePragma {
-    space.release(getSuperPage(cell));
+    throws InlinePragma 
+  {
+
+      /* jfree statistics */
+      Address ncell = Treadmill.nodeToPayload(cell);
+      int header = superPageHeaderSize() + cellHeaderSize();  
+      Address tosize = ncell.sub(header);
+      CountPages.largefreed(space.size(tosize) << LOG_BYTES_IN_PAGE);
+
+      /* remove it */
+      Address superpage = getSuperPage(cell);
+      space.release(superpage);
+
   }
 
   /****************************************************************************

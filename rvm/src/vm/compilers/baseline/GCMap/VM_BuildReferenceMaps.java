@@ -724,7 +724,10 @@ final class VM_BuildReferenceMaps implements VM_BytecodeConstants {
         case JBC_d2i:
         case JBC_d2f:
         case JBC_fcmpl:
-        case JBC_fcmpg: {
+        case JBC_fcmpg: 
+        // JFREE extension
+        case JBC_free: 
+        {
           currBBStkTop--;
           bcodes.skipInstruction();
           break;
@@ -1181,7 +1184,10 @@ final class VM_BuildReferenceMaps implements VM_BytecodeConstants {
           bcodes.skipInstruction();
           break;
         }
-        case JBC_new: {
+        case JBC_new: 
+        // JREG Extensions
+        case JBC_new_in_r: 
+        {
           if (!inJSRSub)
             referenceMaps.recordStkMap(biStart, currBBMap, currBBStkTop, 
                                        blockSeen[currBBNum]);
@@ -1272,7 +1278,11 @@ final class VM_BuildReferenceMaps implements VM_BytecodeConstants {
         }
 
         case JBC_newarray:
-        case JBC_anewarray: {
+        case JBC_anewarray: 
+        // JREG Extensions
+        case JBC_newarray_in_r: 
+        case JBC_anewarray_in_r: 
+                          {
           if (!inJSRSub)
             referenceMaps.recordStkMap(biStart, currBBMap, currBBStkTop, 
                                        blockSeen[currBBNum]);
@@ -1285,7 +1295,10 @@ final class VM_BuildReferenceMaps implements VM_BytecodeConstants {
           break;
         }
 
-        case JBC_multianewarray: {
+        case JBC_multianewarray:
+        // JREG Extensions
+        case JBC_multianewarray_in_r:
+                          {
           VM_TypeReference tRef = bcodes.getTypeReference();
           int dim = bcodes.getArrayDimension();
           if (!inJSRSub)
@@ -1852,3 +1865,4 @@ final class VM_BuildReferenceMaps implements VM_BytecodeConstants {
 
   }
 }
+//  JREG Extension (please keep this comment for automatic back up)

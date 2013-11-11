@@ -278,6 +278,17 @@ public final class OPT_ExpandRuntimeServices extends OPT_CompilerPhase
         }
       }
       break;
+
+      // JFREE extensions
+      case FREE_opcode : {
+
+        VM_Method target = VM_Entrypoints.freeMethod;
+        OPT_MethodOperand methodOp = OPT_MethodOperand.STATIC(target);
+        Call.mutate1(inst, CALL, null, OPT_IRTools.AC(target.getOffset()),
+                     methodOp, FreeObject.getClearToRemove(inst));
+        inline(inst, ir);
+
+      }
           
     default:
       break;

@@ -3875,8 +3875,8 @@ public class VM_Compiler extends VM_BaselineCompiler implements VM_BaselineConst
       asm.emitJMP_Imm (retryLabel);                          // reload reg with valid value
       fr.resolve(asm);                                       // come from Jcc above.
     } else {
-      asm.emitMOV_Reg_RegDisp (reg, JTOC, tableOffset);      // reg is offsets table
-      asm.emitMOV_Reg_RegDisp (reg, reg, memberOffset);      // reg is offset of member
+        asm.emitMOV_Reg_RegDisp (reg, JTOC, tableOffset);      // reg is offsets table
+        asm.emitMOV_Reg_RegDisp (reg, reg, memberOffset);      // reg is offset of member
     }
   }
 
@@ -3889,17 +3889,17 @@ public class VM_Compiler extends VM_BaselineCompiler implements VM_BaselineConst
    * I havenot thought about GCMaps for invoke_compiledmethod 
    */
   protected final void emit_invoke_compiledmethod(VM_CompiledMethod cm) {
-    Offset methodOffset = cm.getOsrJTOCoffset();
-    boolean takeThis = !cm.method.isStatic();
-    VM_MethodReference ref = cm.method.getMemberRef().asMethodReference();
-    genParameterRegisterLoad(ref, takeThis);
-    asm.emitCALL_RegDisp(JTOC, methodOffset);
-    genResultRegisterUnload(ref);
+      Offset methodOffset = cm.getOsrJTOCoffset();
+      boolean takeThis = !cm.method.isStatic();
+      VM_MethodReference ref = cm.method.getMemberRef().asMethodReference();
+      genParameterRegisterLoad(ref, takeThis);
+      asm.emitCALL_RegDisp(JTOC, methodOffset);
+      genResultRegisterUnload(ref);
   }
 
   protected final void emit_loadretaddrconst(int bcIndex) {
-    asm.registerLoadRetAddrConst(bcIndex);
-    asm.emitPUSH_Imm(bcIndex);
+      asm.registerLoadRetAddrConst(bcIndex);
+      asm.emitPUSH_Imm(bcIndex);
   }
 
   /* bTarget is optional, it emits a JUMP instruction, but the caller
@@ -3907,8 +3907,16 @@ public class VM_Compiler extends VM_BaselineCompiler implements VM_BaselineConst
    * of returned forward reference
    */
   protected final VM_ForwardReference emit_pending_goto(int bTarget) {
-    return asm.generatePendingJMP(bTarget);
+      return asm.generatePendingJMP(bTarget);
   }
 
   //-#endif
+  /**
+   * Emit code to implement the free bytecode
+   * JFREE Extension
+   */
+  protected final void emit_free() {
+      genParameterRegisterLoad(1);          // pass 1 parameter word
+      asm.emitCALL_RegDisp(JTOC, VM_Entrypoints.freeMethod.getOffset());
+  }
 }

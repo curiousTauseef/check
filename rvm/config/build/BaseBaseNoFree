@@ -1,0 +1,3 @@
+# JREG Dealloc
+. $1/gc/NoFree
+. $1/compilers/BaseBase

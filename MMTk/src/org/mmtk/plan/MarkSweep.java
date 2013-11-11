@@ -1,6 +1,8 @@
 /*
  * (C) Copyright Department of Computer Science,
  * Australian National University. 2002
+ *
+ * JFREE Extension : counting pages
  */
 package org.mmtk.plan;
 
@@ -24,6 +26,8 @@ import org.mmtk.vm.Plan;
 import org.vmmagic.unboxed.*;
 import org.vmmagic.pragma.*;
 
+import com.ibm.JikesRVM.VM_JavaHeaderConstants;
+import com.ibm.JikesRVM.VM_JavaHeader;
 /**
  * This class implements a simple mark-sweep collector.
  *
@@ -45,15 +49,18 @@ import org.vmmagic.pragma.*;
  * @date $Date: 2005/02/04 10:03:07 $
  */
 public class MarkSweep extends StopTheWorldGC implements Uninterruptible {
-  public final static String Id = "$Id: MarkSweep.java,v 1.9 2005/02/04 10:03:07 steveb-oss Exp $"; 
+  public final static String Id = 
+      "$Id: MarkSweep.java,v 1.9 2005/02/04 10:03:07 steveb-oss Exp $"; 
 
   /****************************************************************************
    *
    * Class variables
    */
   public static final boolean MOVES_OBJECTS = false;
-  public static final int GC_HEADER_BITS_REQUIRED = MarkSweepSpace.LOCAL_GC_BITS_REQUIRED;
-  public static final int GC_HEADER_WORDS_REQUIRED = MarkSweepSpace.GC_HEADER_WORDS_REQUIRED;
+  public static final int GC_HEADER_BITS_REQUIRED = 
+      MarkSweepSpace.LOCAL_GC_BITS_REQUIRED;
+  public static final int GC_HEADER_WORDS_REQUIRED = 
+      MarkSweepSpace.GC_HEADER_WORDS_REQUIRED;
 
   // GC state
   private static int msReservedPages;
@@ -64,13 +71,15 @@ public class MarkSweep extends StopTheWorldGC implements Uninterruptible {
   public static final int ALLOCATORS = BASE_ALLOCATORS;
 
   // Spaces
-  private static MarkSweepSpace msSpace = new MarkSweepSpace("ms", DEFAULT_POLL_FREQUENCY, (float) 0.6);
+  private static MarkSweepSpace msSpace = 
+      new MarkSweepSpace("ms", DEFAULT_POLL_FREQUENCY, (float) 0.6);
   private static final int MS = msSpace.getDescriptor();
 
 
   // Miscellaneous constants
   // XXX 512<<10 should be a named constant
-  private static final int MS_PAGE_RESERVE = (512<<10)>>>LOG_BYTES_IN_PAGE; // 1M
+  private static final int MS_PAGE_RESERVE = 
+      (512<<10)>>>LOG_BYTES_IN_PAGE; // 1M
   private static final double MS_RESERVE_FRACTION = 0.1;
 
   /****************************************************************************
@@ -128,14 +137,17 @@ public class MarkSweep extends StopTheWorldGC implements Uninterruptible {
    */
   public final Address alloc(int bytes, int align, int offset, int allocator)
     throws InlinePragma {
+    Address res; 
     switch (allocator) {
-    case       ALLOC_MS: return ms.alloc(bytes, align, offset, false);
-    case      ALLOC_LOS: return los.alloc(bytes, align, offset);
-    case ALLOC_IMMORTAL: return immortal.alloc(bytes, align, offset);
+    case       ALLOC_MS: res = ms.alloc(bytes, align, offset, false); break;
+    case      ALLOC_LOS: res = los.alloc(bytes, align, offset); break;
+    case ALLOC_IMMORTAL: res = immortal.alloc(bytes, align, offset); break;
     default:
       if (Assert.VERIFY_ASSERTIONS) Assert.fail("No such allocator"); 
-      return Address.zero();
+      res = Address.zero();
     }
+    CountPages.updateCount();
+    return res;
   }
   
   /**
@@ -354,14 +366,15 @@ public class MarkSweep extends StopTheWorldGC implements Uninterruptible {
 
     progress = (available > availablePreGC) && (available > exceptionReserve);
     if (progress) {
-      msReservedPages = (int) (available * MS_RESERVE_FRACTION);
-      int threshold = 2 * exceptionReserve;
-      if (threshold < MS_PAGE_RESERVE) threshold = MS_PAGE_RESERVE;
-      if (msReservedPages < threshold) 
-        msReservedPages = threshold;
+        msReservedPages = (int) (available * MS_RESERVE_FRACTION);
+        int threshold = 2 * exceptionReserve;
+        if (threshold < MS_PAGE_RESERVE) threshold = MS_PAGE_RESERVE;
+        if (msReservedPages < threshold) 
+            msReservedPages = threshold;
     } else {
-      msReservedPages = msReservedPages/2;
+        msReservedPages = msReservedPages/2;
     }
+    CountPages.donegc();
   }
 
 
@@ -463,7 +476,8 @@ public class MarkSweep extends StopTheWorldGC implements Uninterruptible {
    * @return The number of pages available for allocation.
    */
   protected static final int getPagesAvail() {
-    return getTotalPages() - msSpace.reservedPages() - loSpace.reservedPages() - immortalSpace.reservedPages();
+    return getTotalPages() - msSpace.reservedPages() - 
+        loSpace.reservedPages() - immortalSpace.reservedPages();
   }
 
 
@@ -482,6 +496,66 @@ public class MarkSweep extends StopTheWorldGC implements Uninterruptible {
   }
 
   protected final void planExit(int value) {
-    ms.exit();
+      CountPages.printusage();
+      ms.exit();
+        Log.writeln();
+        Log.write("Java/GC/Misc header bytes = ");
+        Log.write(VM_JavaHeaderConstants.JAVA_HEADER_BYTES);
+        Log.write(" ");
+        Log.write(VM_JavaHeaderConstants.GC_HEADER_BYTES);
+        Log.write(" ");
+        Log.write(VM_JavaHeaderConstants.MISC_HEADER_BYTES);
+        Log.writeln();
+        Log.write("Available bits = ");
+        Log.write(VM_JavaHeaderConstants.NUM_AVAILABLE_BITS);
+        Log.writeln();
+  }
+
+  /* JFree extension: use name InMS to check VM image is
+   * correctly built */
+  public final void freeObjectInMS(ObjectReference tofree) 
+          throws InlinePragma
+  {
+        if (tofree == null || 
+            Space.isInSpace(IMMORTAL,tofree) ||
+            Space.isInSpace(META,tofree))
+            return;
+
+        if (Space.isInSpace(LOS, tofree)) {
+            Address cell = ObjectModel.refToAddress(tofree);
+            if (loSpace.setFree(tofree))  {
+                CountPages.prepareForLarge();
+                los.freeExternal(cell);
+            }
+            return;
+        }
+        else  {
+            /* if (Space.isInSpace(MS,tofree)) */ 
+
+            /* marks live bit to interrupt the scanning
+             * process */
+            if (msSpace.setFree(tofree)) {
+            /* places cell back in free-list structure */
+                ms.freeInMS(tofree);
+            }
+            return;
+        }
+
+        /* Assert.fail("Free called in invalid space"); */
+    }
+
+  public static final boolean isFreed(ObjectReference object) 
+          throws InlinePragma
+  {
+      if (object == null || 
+              Space.isInSpace(IMMORTAL,object) ||
+              Space.isInSpace(META,object))
+          return false;
+
+      if (Space.isInSpace(LOS, object)) 
+          return loSpace.isFreed(object);
+      else  
+          return msSpace.isFreed(object);
+
   }
 }

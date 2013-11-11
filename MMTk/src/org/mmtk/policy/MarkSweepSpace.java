@@ -36,23 +36,40 @@ import org.vmmagic.unboxed.*;
 public final class MarkSweepSpace extends Space
   implements Constants, Uninterruptible {
 
-  /****************************************************************************
+  /***************************************************************************
    *
    * Class variables
    */
-  public static final int LOCAL_GC_BITS_REQUIRED = 1;
+  /* changed from 1 to 8 => free flag + internal data */
+  public static final int LOCAL_GC_BITS_REQUIRED = 8;
   public static final int GLOBAL_GC_BITS_REQUIRED = 0;
   public static final int GC_HEADER_WORDS_REQUIRED = 0;
-  public static final Word MARK_BIT_MASK = Word.one();  // ...01
+  /* jfree Header (note change: before there was no shifting in MARK_BIT_MASK)
+  8 bits: 
+          +-----------------+
+          | F M D S S S S S |
+          +-----------------+
+        Defined here:
+          F = free bit    (0 = freed, 1 = not freed)
+          M = mark bit    (0/1 mark bit swaps on gc cycle)
+        Defined in Segregrated free list:
+          D = delta
+          S = size Class 
+          ( use compact bucket size in Segregrated free list to use only 5 bits)
+  */
+  public static final Word MARK_BIT_MASK = Word.one().lsh(6);  
+  /* FREE mask: used to stop the memory scanning process
+   *   When free bit is = 1 we stop scanning */
+  public static final Word FREE_BIT_MASK = Word.one().lsh(7);  // ...1000000
 
-  /****************************************************************************
+  /***************************************************************************
    *
    * Instance variables
    */
   private Word markState;
   public boolean inMSCollection = false;
 
-  /****************************************************************************
+  /***************************************************************************
    *
    * Initialization
    */
@@ -71,7 +88,8 @@ public final class MarkSweepSpace extends Space
   public MarkSweepSpace(String name, int pageBudget, Address start, 
                         Extent bytes) {
     super(name, false, false, start, bytes);
-    pr = new FreeListPageResource(pageBudget, this, start, extent, MarkSweepLocal.META_DATA_PAGES_PER_REGION);
+    pr = new FreeListPageResource(pageBudget, this, start, extent, 
+            MarkSweepLocal.META_DATA_PAGES_PER_REGION);
   }
 
   /**
@@ -88,7 +106,8 @@ public final class MarkSweepSpace extends Space
    */
   public MarkSweepSpace(String name, int pageBudget, int mb) {
     super(name, false, false, mb);
-    pr = new FreeListPageResource(pageBudget, this, start, extent, MarkSweepLocal.META_DATA_PAGES_PER_REGION);
+    pr = new FreeListPageResource(pageBudget, this, start, extent, 
+            MarkSweepLocal.META_DATA_PAGES_PER_REGION);
   }
    
   /**
@@ -107,7 +126,8 @@ public final class MarkSweepSpace extends Space
    */
   public MarkSweepSpace(String name, int pageBudget, float frac) {
     super(name, false, false, frac);
-    pr = new FreeListPageResource(pageBudget, this, start, extent, MarkSweepLocal.META_DATA_PAGES_PER_REGION);
+    pr = new FreeListPageResource(pageBudget, this, start, extent, 
+            MarkSweepLocal.META_DATA_PAGES_PER_REGION);
   }
    
   /**
@@ -130,7 +150,8 @@ public final class MarkSweepSpace extends Space
    */
   public MarkSweepSpace(String name, int pageBudget, int mb, boolean top) {
     super(name, false, false, mb, top);
-    pr = new FreeListPageResource(pageBudget, this, start, extent, MarkSweepLocal.META_DATA_PAGES_PER_REGION);
+    pr = new FreeListPageResource(pageBudget, this, start, extent, 
+            MarkSweepLocal.META_DATA_PAGES_PER_REGION);
   }
   
   /**
@@ -152,12 +173,14 @@ public final class MarkSweepSpace extends Space
    * @param top Should this space be at the top (or bottom) of the
    * available virtual memory.
    */
-  public MarkSweepSpace(String name, int pageBudget, float frac, boolean top) {
+  public MarkSweepSpace(String name, int pageBudget, float frac, boolean top) 
+  {
     super(name, false, false, frac, top);
-    pr = new FreeListPageResource(pageBudget, this, start, extent, MarkSweepLocal.META_DATA_PAGES_PER_REGION);
+    pr = new FreeListPageResource(pageBudget, this, start, extent, 
+            MarkSweepLocal.META_DATA_PAGES_PER_REGION);
   }
 
-  /****************************************************************************
+  /***************************************************************************
    *
    * Collection
    */
@@ -171,7 +194,8 @@ public final class MarkSweepSpace extends Space
   public void prepare() { 
     markState = MARK_BIT_MASK.sub(markState);
     
-    MarkSweepLocal.zeroLiveBits(start, ((FreeListPageResource) pr).getHighWater());
+    MarkSweepLocal.zeroLiveBits(start, 
+            ((FreeListPageResource) pr).getHighWater());
     inMSCollection = true;
   }
 
@@ -202,7 +226,7 @@ public final class MarkSweepSpace extends Space
     ((FreeListPageResource) pr).releasePages(start); 
   }
 
-  /****************************************************************************
+  /***************************************************************************
    *
    * Object processing and tracing
    */
@@ -222,11 +246,16 @@ public final class MarkSweepSpace extends Space
    */
   public final ObjectReference traceObject(ObjectReference object)
     throws InlinePragma {
+    if (isFreed(object))  {
+        MarkSweepLocal.liveObject(object);
+        return object;
+    }
+
     if (testAndMark(object, markState)) {
-      if (Stats.GATHER_MARK_CONS_STATS)
-        Plan.mark.inc(ObjectModel.getSizeWhenCopied(object));
-      MarkSweepLocal.liveObject(object);
-      Plan.enqueue(object);
+        if (Stats.GATHER_MARK_CONS_STATS)
+            Plan.mark.inc(ObjectModel.getSizeWhenCopied(object));
+        MarkSweepLocal.liveObject(object);
+        Plan.enqueue(object);
     }
     return object;
   }
@@ -241,7 +270,33 @@ public final class MarkSweepSpace extends Space
     return testMarkBit(object, markState);
   }
 
-  /****************************************************************************
+  /* jfree extension */
+  public final boolean setFree(ObjectReference object)
+    throws InlinePragma {
+    if (isFreed(object)) {
+            Log.write(" WARNING: Object already set free:");
+            Log.write(object);
+            Log.flush();
+        return false;
+    }
+    /* mark object so that the GC stops scanning */
+    Word oldValue = ObjectModel.readAvailableBitsWord(object);
+    Word newValue = oldValue.and(FREE_BIT_MASK.not());
+    ObjectModel.writeAvailableBitsWord(object, newValue);
+    return true;
+  }
+
+  /* jfree added */
+  public final boolean isFreed(ObjectReference object)
+    throws InlinePragma 
+  {
+    if (object.isNull()) 
+        return true;
+    Word v = ObjectModel.readAvailableBitsWord(object);
+    return !(v.and(FREE_BIT_MASK).EQ(FREE_BIT_MASK));
+  }
+
+  /***************************************************************************
    *
    * Header manipulation
    */
@@ -264,7 +319,7 @@ public final class MarkSweepSpace extends Space
   public final void postCopy(ObjectReference object) 
     throws InlinePragma {
     writeMarkBit(object);      // TODO one of these two is redundant!
-        MarkSweepLocal.liveObject(object);
+    MarkSweepLocal.liveObject(object);
   }
   /**
    * Perform any required initialization of the GC portion of the header.
@@ -275,6 +330,8 @@ public final class MarkSweepSpace extends Space
     throws InlinePragma {
     Word oldValue = ObjectModel.readAvailableBitsWord(object);
     Word newValue = oldValue.and(MARK_BIT_MASK.not()).or(markState);
+    /* jfree added */
+    newValue = newValue.or(FREE_BIT_MASK);
     ObjectModel.writeAvailableBitsWord(object, newValue);
   }
 
@@ -306,7 +363,8 @@ public final class MarkSweepSpace extends Space
    */
   private static boolean testMarkBit(ObjectReference object, Word value)
     throws InlinePragma {
-    return ObjectModel.readAvailableBitsWord(object).and(MARK_BIT_MASK).EQ(value);
+    return ObjectModel.readAvailableBitsWord(
+            object).and(MARK_BIT_MASK).EQ(value);
   }
 
   /**

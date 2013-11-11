@@ -1036,6 +1036,33 @@ public class MM_Interface implements VM_HeapLayoutConstants, Constants, Uninterr
     throws InlinePragma, InterruptiblePragma {
     return new int[n];
   }
+  
+//-#if RVM_WITH_FREE
+/**
+ * JREG Extension : Free object space
+ *
+ */
+  public static void freeObject(Object toFree) 
+      throws UninterruptiblePragma, InlinePragma {
+      Plan plan = Plan.getInstance();
+//-#if RVM_WITH_FREE_PLAN
+      plan.freeObject(ObjectReference.fromObject(toFree));
+//-#elif RVM_WITH_MARK_SWEEP
+      plan.freeObjectInMS(ObjectReference.fromObject(toFree));
+//-#endif
+  }
+//-#endif
 
+  public static boolean isFreed(ObjectReference object)
+      throws UninterruptiblePragma, InlinePragma {
+      boolean b = false;
+//-#if RVM_WITH_FREE
+//-#if RVM_WITH_MARK_SWEEP
+      Plan plan = Plan.getInstance();
+      b = plan.isFreed(object);
+//-#endif
+//-#endif
+      return b;
+  }
 }
 

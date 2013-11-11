@@ -1,0 +1,353 @@
+/*
+ * JREG Extension
+ * MM with explicit deallocation
+ */
+package org.mmtk.plan;
+
+import org.mmtk.policy.DeallocSpace;
+import org.mmtk.policy.DeallocLocal;
+import org.mmtk.policy.Space;
+import org.mmtk.policy.Space;
+import org.mmtk.utility.alloc.*;
+import org.mmtk.utility.CallSite;
+import org.mmtk.utility.heap.*;
+import org.mmtk.utility.scan.*;
+import org.mmtk.utility.Log;
+import org.mmtk.vm.Assert;
+import org.mmtk.vm.ObjectModel;
+import org.mmtk.vm.Collection;
+
+import org.vmmagic.unboxed.*;
+import org.vmmagic.pragma.*;
+
+/**
+ * This class implements a simple allocator no collection, only
+ * explicit deallocation
+ */
+public class Dealloc 
+    extends StopTheWorldGC 
+    implements Uninterruptible {
+
+    public static final boolean MOVES_OBJECTS = false;
+    public static final int GC_HEADER_BITS_REQUIRED = 0;
+    public static final int GC_HEADER_WORDS_REQUIRED = 0;
+    public static final int ALLOCATORS = BASE_ALLOCATORS;
+
+    // spaces
+    private static Space defaultSpace = new
+        DeallocSpace("dea", DEFAULT_POLL_FREQUENCY, (float) 0.6); 
+    private static final int DS = defaultSpace.getDescriptor();
+
+    // allocators
+    private DeallocLocal def;
+
+    public Dealloc() { 
+        def = new DeallocLocal(defaultSpace);
+    }
+
+    public static final void boot() throws InterruptiblePragma {
+        StopTheWorldGC.boot();
+    }
+
+    private static long maxsize;
+    private static long size;
+    private static long immortalSize;
+    private static long totalSize;
+    private static long realTotalSize;
+    private static long realMaxsize;
+    private static long realSize;
+    private static long smallSize;
+    private static long realSmallSize;
+    private static long bigSize;
+    private static long realBigSize;
+    private static long smallNo;
+    private static long realSmallNo;
+    private static long bigNo;
+    private static long realBigNo;
+    private static long delSmallSize;
+    private static long delRealSmallSize;
+    private static long delBigSize;
+    private static long delRealBigSize;
+    private static long delSmallNo;
+    private static long delRealSmallNo;
+    private static long delBigNo;
+    private static long delRealBigNo;
+
+
+    public final Address alloc(int bytes, int align, int offset, int allocator)
+        throws InlinePragma {
+    	Address result;
+        if (bytes > 8180 && allocator == ALLOC_DEFAULT) allocator = ALLOC_LOS;
+        switch (allocator) {
+            case ALLOC_IMMORTAL:  // no immortal
+                result = immortal.alloc(bytes, align, offset);
+                immortalSize += bytes;
+                break;
+            case      ALLOC_LOS:  
+                result = los.alloc(bytes, align, offset);
+                break;
+            case  ALLOC_DEFAULT: 
+                result = def.alloc(bytes, align, offset, true);
+                break;
+            default:
+                if (Assert.VERIFY_ASSERTIONS) Assert.fail("No such allocator"); 
+                return Address.zero();
+        }
+        updateCount();
+        // addObject(result,bytes);
+        return result;
+    }
+
+    /*
+    private final void addObject(Address a, int s){
+        if (internalAlloc) return;
+        internalAlloc = true;
+        if (sizes == null) {
+            sizes = new java.util.HashMap();
+        }
+        sizes.put(new Integer(a.toInt()),new Integer(s));
+        size += s;
+        if (size > maxsize) maxsize = size;
+        internalAlloc = false;
+    }
+
+    private final void removeObject(Address a){
+        if (internalAlloc) return;
+        internalAlloc = true;
+        if (sizes != null) {
+            Integer i = (Integer)sizes.get(new Integer(a.toInt()));
+            if (i != null)
+                size -= i.intValue();
+            else
+                Log.write("Unknown address");
+        }
+        internalAlloc = false;
+    }
+    */
+
+    public final void postAlloc(ObjectReference object, ObjectReference typeRef, 
+            int bytes, int allocator) throws InlinePragma {
+        switch (allocator) {
+            case ALLOC_IMMORTAL: 
+                immortalSpace.postAlloc(object);
+                return;
+            case      ALLOC_LOS: 
+                loSpace.initializeHeader(object);
+            case  ALLOC_DEFAULT: 
+                return;
+            default:
+                if (Assert.VERIFY_ASSERTIONS) Assert.fail("No such allocator"); 
+        }
+    }
+    public final Address allocCopy(ObjectReference original, int bytes, 
+            int align, int offset) throws InlinePragma {
+        Assert.fail("no allocCopy in noGC");
+        //    return Address.zero();   // Trips some intel opt compiler bug...
+        return Address.max();
+    }
+
+    public final void postCopy(ObjectReference ref, ObjectReference typeRef, 
+            int bytes) {
+        Assert.fail("no postCopy in noGC");
+    } 
+
+    protected final Space getSpaceFromAllocator(Allocator a) {
+        if (a == def) return defaultSpace;
+        return super.getSpaceFromAllocator(a);
+    }
+
+    protected final Allocator getAllocatorFromSpace(Space space) {
+        if (space == defaultSpace) return def;
+        return super.getAllocatorFromSpace(space);
+    }
+
+    public final AllocAdvice getAllocAdvice(MMType type, int bytes,
+            CallSite callsite, AllocAdvice hint) {
+        return null;
+    }
+
+    public final boolean poll(boolean mustCollect, Space space) 
+        throws LogicallyUninterruptiblePragma {
+        if (!initialized || collectionsInitiated > 0 || space == metaDataSpace)
+            return false;
+
+        if (getPagesAvail() <= 0) {
+            pollnospace++;
+        }
+
+        return false;
+    }
+
+    protected final void globalPrepare() {
+      //loSpace.prepare();
+      //def.prepare();
+    }
+
+    protected final void threadLocalPrepare(int count) {
+    }
+
+    protected final void threadLocalRelease(int count) {
+    }
+
+    protected final void globalRelease() {
+      //loSpace.release();
+      //def.release();
+    }
+
+
+    public static final ObjectReference traceObject(ObjectReference object) 
+        throws InlinePragma {
+        //return object;
+        if (object.isNull()) return object;
+        else if (Space.isInSpace(DS, object))
+            return defaultSpace.traceObject(object);
+        return Space.getSpaceForObject(object).traceObject(object);
+    }
+
+    public static final ObjectReference traceObject(ObjectReference object,
+            boolean root) {
+        return traceObject(object);
+    }
+
+    public static final boolean isLive(ObjectReference object) {
+        if (object.isNull()) return false;
+        return true;
+    }
+
+    protected static final int getPagesReserved() {
+        return getPagesUsed();
+    }
+
+    protected static final int getPagesUsed() {
+        int pages = defaultSpace.reservedPages();
+        pages += immortalSpace.reservedPages();
+        pages += loSpace.reservedPages();
+        pages += metaDataSpace.reservedPages();
+        return pages;
+    }
+
+    protected static final int getPagesAvail() {
+        return getTotalPages() - getPagesReserved();
+    }
+
+
+    public final void show() {
+        //def.show();
+    }
+
+    /** deallocate an object :-) */
+    public final void freeObject(ObjectReference tofree) {
+        //removeObject(ObjectModel.refToAddress(tofree));
+        if (tofree == null)
+        {
+        	return;
+        }
+        if (Space.isInSpace(IMMORTAL,tofree)){
+            return;
+        }
+        if (Space.isInSpace(META,tofree)){
+            return;
+        }
+        if (Space.isInSpace(LOS,tofree)){
+        	los.free(ObjectModel.refToAddress(tofree));
+            return;
+        }
+        else if (Space.isInSpace(DS,tofree))
+        {
+            def.free(tofree);
+            return;
+        }
+        Assert.fail("should not free outside");
+    }
+
+    /** stat gathering */
+
+    private int maxpages  =0;
+    private int currpages =0;
+    private final void updateCount(){
+        currpages = getPagesReserved();
+        if (currpages > maxpages) maxpages = currpages;
+    }
+
+    private int freenull = 0;
+    private int freeoutside = 0;
+    private int pollnospace = 0;
+    private int immortal_num = 0;
+    private int meta_num = 0;
+    private int large = 0;
+    private int dealloc = 0;
+
+    /** print on exit */
+
+    public static void countAlloc(int s, int realS, boolean isSmall)
+    {
+    	size += s;
+    	realSize += realS;
+    	if (size > maxsize) maxsize = size;
+    	if (realSize > realMaxsize) realMaxsize = realSize;
+    	totalSize += s;
+    	realTotalSize += realS;
+    	if (isSmall)
+    	{
+    		smallSize += s;
+    		realSmallSize += realS;
+    		smallNo ++;
+    		realSmallNo ++;
+    	}
+    	else
+    	{
+    		bigSize += s;
+    		realBigSize += realS;
+    		bigNo ++;
+    		realBigNo ++;
+    		
+    	}
+    }
+    
+    public static void countDealloc(int s, int realS, boolean isSmall)
+    {
+    	size -= s;
+    	realSize -= realS;
+    	if (isSmall)
+    	{
+    		delSmallSize += s;
+    		delRealSmallSize += realS;
+    		delSmallNo ++;
+    		delRealSmallNo ++;
+    	}
+    	else
+    	{
+    		delBigSize += s;
+    		delRealBigSize += realS;
+    		delBigNo ++;
+    		delRealBigNo ++;
+    		
+    	}
+    	
+    }
+    
+    final int limit = 40;
+    private final void printNumber(String message, long number) {
+        Log.write("  - ");
+        Log.write(message);
+        for (int i = message.length();  i < limit ; i++)
+            Log.write(' ');
+        Log.write(" = ");
+        Log.write(number);
+        Log.write("\t  ( ");
+        Log.write(((double)number)/(1<<20));
+        Log.writeln("Mb )");
+    }
+
+    public void planExit(int value){
+        updateCount();
+        Log.writeln();
+        Log.writeln("[------ End of execution -----]");
+         int PAGES_MB = 2;
+        Log.write("  - Pages watermark = \t\t");
+        defaultSpace.printPages(maxpages,PAGES_MB);
+        Log.writeln();
+    }
+
+}
+

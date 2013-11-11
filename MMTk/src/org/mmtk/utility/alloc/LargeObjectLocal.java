@@ -8,7 +8,6 @@
  */
 package org.mmtk.policy;
 
-import org.mmtk.plan.CountPages;
 import org.mmtk.policy.LargeObjectSpace;
 import org.mmtk.utility.alloc.LargeObjectAllocator;
 import org.mmtk.utility.Treadmill;
@@ -120,15 +119,6 @@ public final class LargeObjectLocal extends LargeObjectAllocator
     }
     treadmill.flip();
     if (Assert.VERIFY_ASSERTIONS) Assert._assert(treadmill.toSpaceEmpty());
-  }
-
-
-  public final void freeExternal(Address tofree)
-  throws InlinePragma
-  {
-      Address node = Treadmill.payloadToNode(tofree);
-      treadmill.removeFromSpace(node);
-      free(node);
   }
 
 

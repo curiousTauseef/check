@@ -1,9 +1,14 @@
 /*
+ * JREG Extension
+ * MM with explicit deallocation
+ */
+/*
  * (C) Copyright Department of Computer Science,
  * Australian National University. 2003
  */
 package org.mmtk.utility.alloc;
 
+import org.mmtk.plan.CountPages;
 import org.mmtk.policy.Space;
 import org.mmtk.utility.*;
 import org.mmtk.utility.heap.*;
@@ -41,14 +46,16 @@ import org.vmmagic.unboxed.*;
  */
 public abstract class SegregatedFreeList extends Allocator 
   implements Constants, Uninterruptible {
-  public final static String Id = "$Id: SegregatedFreeList.java,v 1.42 2005/02/04 10:03:08 steveb-oss Exp $"; 
+  public final static String Id = 
+      "$Id: SegregatedFreeList.java,v 1.42 2005/02/04 10:03:08 steveb-oss Exp $"; 
 
   /****************************************************************************
    *
    * Class variables
    */
-  protected static final boolean LAZY_SWEEP = true;
-  private static final boolean COMPACT_SIZE_CLASSES = false;
+  protected static final boolean LAZY_SWEEP = false;
+  /* jfree -> changed to true */
+  private static final boolean COMPACT_SIZE_CLASSES = true;
   private static final boolean SORT_FREE_BLOCKS = false;
   private static final int BLOCK_BUCKETS = 3;
   protected static final Address DEBUG_BLOCK = Address.max();  // 0x5b098008
@@ -56,29 +63,41 @@ public abstract class SegregatedFreeList extends Allocator
   protected static final int FREE_LIST_HEADER_BYTES = BYTES_IN_ADDRESS;
   private static final int FREE_LIST_OFFSET = 0;
   private static final int FREE_LIST_BITS = BlockAllocator.LOG_MAX_BLOCK;
-  private static final int SIZE_CLASS_BITS = 6;
+  /* changed to include compact size (it was just 6) */
+  private static final int SIZE_CLASS_BITS = (COMPACT_SIZE_CLASSES) ? 5 : 6;
   private static final int INUSE_BITS = 10;
   private static final int SIZE_CLASS_SHIFT = FREE_LIST_BITS;
   private static final int INUSE_SHIFT = FREE_LIST_BITS + SIZE_CLASS_BITS;
   protected static final int MIN_CELLS = 6;
   protected static final int MAX_CELLS = 99; //(1<<(INUSE_BITS-1))-1;
 
+
   // live bits etc
-  private static final int OBJECT_LIVE_SHIFT = LOG_MIN_ALIGNMENT; // 4 byte resolution
+  private static final int OBJECT_LIVE_SHIFT = 
+      LOG_MIN_ALIGNMENT; // 4 byte resolution
   private static final int LOG_BIT_COVERAGE = OBJECT_LIVE_SHIFT;
   protected static final int BYTES_PER_LIVE_BIT = 1<<LOG_BIT_COVERAGE;
-  private static final int BYTES_PER_LIVE_WORD = 1<<(LOG_BIT_COVERAGE+LOG_BITS_IN_WORD);
-  private static final int LOG_LIVE_COVERAGE = LOG_BIT_COVERAGE + LOG_BITS_IN_BYTE;
-  private static final int LIVE_BYTES_PER_REGION = 1<<(EmbeddedMetaData.LOG_BYTES_IN_REGION - LOG_LIVE_COVERAGE);
-  private static final Word WORD_SHIFT_MASK = Word.one().lsh(LOG_BITS_IN_WORD).sub(Extent.one());
-  private static final int LOG_LIVE_WORD_STRIDE = LOG_LIVE_COVERAGE + LOG_BYTES_IN_WORD;
-  private static final Extent LIVE_WORD_STRIDE = Extent.fromInt(1<<LOG_LIVE_WORD_STRIDE);
-  private static final Word LIVE_WORD_STRIDE_MASK = LIVE_WORD_STRIDE.sub(1).toWord().not();
-  private static final int NET_META_DATA_BYTES_PER_REGION = BlockAllocator.META_DATA_BYTES_PER_REGION + LIVE_BYTES_PER_REGION;
-  public static final int META_DATA_PAGES_PER_REGION = Conversions.bytesToPages(NET_META_DATA_BYTES_PER_REGION);
+  private static final int BYTES_PER_LIVE_WORD = 
+      1<<(LOG_BIT_COVERAGE+LOG_BITS_IN_WORD);
+  private static final int LOG_LIVE_COVERAGE = 
+      LOG_BIT_COVERAGE + LOG_BITS_IN_BYTE;
+  private static final int LIVE_BYTES_PER_REGION = 
+      1<<(EmbeddedMetaData.LOG_BYTES_IN_REGION - LOG_LIVE_COVERAGE);
+  private static final Word WORD_SHIFT_MASK = 
+      Word.one().lsh(LOG_BITS_IN_WORD).sub(Extent.one());
+  private static final int LOG_LIVE_WORD_STRIDE = 
+      LOG_LIVE_COVERAGE + LOG_BYTES_IN_WORD;
+  private static final Extent LIVE_WORD_STRIDE = 
+      Extent.fromInt(1<<LOG_LIVE_WORD_STRIDE);
+  private static final Word LIVE_WORD_STRIDE_MASK = 
+      LIVE_WORD_STRIDE.sub(1).toWord().not();
+  private static final int NET_META_DATA_BYTES_PER_REGION = 
+      BlockAllocator.META_DATA_BYTES_PER_REGION + LIVE_BYTES_PER_REGION;
+  public static final int META_DATA_PAGES_PER_REGION = 
+      Conversions.bytesToPages(NET_META_DATA_BYTES_PER_REGION);
   
-  private static final Extent META_DATA_OFFSET = BlockAllocator.META_DATA_EXTENT;
-
+  private static final Extent META_DATA_OFFSET = 
+      BlockAllocator.META_DATA_EXTENT;
   protected static int[] cellSize;
   protected static byte[] blockSizeClass;
   protected static int[] blockHeaderSize;
@@ -177,24 +196,26 @@ public abstract class SegregatedFreeList extends Allocator
    * @return The address of the first word of <code>bytes</code>
    * contigious bytes of zeroed memory.
    */
-  public final Address allocFast(int bytes, int align, int offset,
-                                 boolean inGC) throws InlinePragma {
-    int alignedBytes = getMaximumAlignedSize(bytes, align);
-    int sizeClass = getSizeClass(alignedBytes);
-    Address cell = freeList.get(sizeClass);
-    if (!cell.isZero()) {
-      freeList.set(sizeClass, getNextCell(cell));
-      setNextCell(cell, Address.zero()); // clear out the free list link
-      if (alignedBytes != bytes) {
-        // Ensure aligned as requested.
-        return alignAllocation(cell, align, offset);
-      } 
-    } 
+    public final Address allocFast(int bytes, int align, int offset, 
+                                   boolean inGC) 
+        throws InlinePragma 
+    {
+        int alignedBytes = getMaximumAlignedSize(bytes, align);
+        int sizeClass = getSizeClass(alignedBytes);
+        Address cell = freeList.get(sizeClass);
+        if (cell.isZero()) return cell;
+        
+        freeList.set(sizeClass, getNextCell(cell));
+        setNextCell(cell, Address.zero()); // clear out the free list link
+        /* jfree stats */
+        int cellsz = cellSize[sizeClass];
+        CountPages.alloc(cellsz, false);
 
-    // Alignment request guaranteed or cell.isZero().
-    return cell;
-  }
+        return alignAndStoreData(cell, align, offset, sizeClass);
+    }
 
+
+    
   /**
    * Allocate <code>bytes</code> contigious bytes of non-zeroed
    * memory.  First check if the fast path works.  This is needed
@@ -222,6 +243,7 @@ public abstract class SegregatedFreeList extends Allocator
    * @return The address of the first word of the <code>bytes</code>
    * contigious bytes of zerod memory.
    */
+  
   public final Address allocSlowOnce(int bytes, int align, int offset,
                                      boolean inGC) throws NoInlinePragma {
     Address cell = allocFast(bytes, align, offset, inGC);
@@ -232,33 +254,17 @@ public abstract class SegregatedFreeList extends Allocator
     bytes = getMaximumAlignedSize(bytes, align); 
     int sizeClass = getSizeClass(bytes);
     Address current = currentBlock.get(sizeClass);
-    if (!current.isZero()) {
-      // zero the current (empty) free list if necessary
-      if (preserveFreeList())
-        setFreeList(current, Address.zero());
-
-      // find a free list which is not empty
-      current = BlockAllocator.getNextBlock(current);
-      while (!current.isZero()) {
-        cell = advanceToBlock(current, sizeClass);
-        if (!cell.isZero()) {
-          // this block has at least one free cell, so use it
-          currentBlock.set(sizeClass, current);
-          freeList.set(sizeClass, getNextCell(cell));
-          setNextCell(cell, Address.zero()); // clear out the free list link
-          return alignAllocation(cell, align, offset);
-        }
-        current = BlockAllocator.getNextBlock(current);
-      }
-    }
 
     cell = expandSizeClass(sizeClass);
     if (cell.isZero())
-      return Address.zero();
+        return Address.zero();
+
+    int cellsz = cellSize[sizeClass];
+    CountPages.alloc(cellsz, false);
 
     freeList.set(sizeClass, getNextCell(cell));
-    Memory.zeroSmall(cell, Extent.fromIntZeroExtend(bytes));
-    return alignAllocation(cell, align, offset);
+    Memory.zeroSmall(cell, Extent.fromIntZeroExtend(bytes));      
+    return alignAndStoreData(cell, align, offset, sizeClass);
   }
 
   /**
@@ -274,6 +280,8 @@ public abstract class SegregatedFreeList extends Allocator
    * allocated block of pre-zeroed cells, or return zero if there were
    * insufficient resources to allocate a new block.
    */
+
+  
   private final Address expandSizeClass(int sizeClass) 
     throws InlinePragma {
     Address block = blockAllocator.alloc(blockSizeClass[sizeClass]);
@@ -295,6 +303,8 @@ public abstract class SegregatedFreeList extends Allocator
 
     // construct the free list
     while (cursor.add(cellExtent).LE(sentinel)) {
+      /* here is where blocks are divided into cells:
+       * 'cursor' is a cell in 'block' */
       setNextCell(cursor, lastCell); 
       lastCell = cursor;
       cursor = cursor.add(cellExtent);
@@ -314,7 +324,7 @@ public abstract class SegregatedFreeList extends Allocator
    */
   protected final Address getNextCell(Address cell)
     throws InlinePragma {
-    return cell.loadAddress();
+      return cell.loadAddress();
   }
 
   /**
@@ -348,6 +358,8 @@ public abstract class SegregatedFreeList extends Allocator
     throws InlinePragma {
     Memory.zeroSmall(cell, Extent.fromIntZeroExtend(cellSize[sizeClass]));
     setNextCell(cell, nextFree);
+    if (CountPages.counting && firstCount)
+        CountPages.gcfreed2(cellSize[sizeClass]);
   }
 
   /****************************************************************************
@@ -425,7 +437,10 @@ public abstract class SegregatedFreeList extends Allocator
    */
   protected static final int getSizeClass(int bytes)
     throws InlinePragma {
-    if (Assert.VERIFY_ASSERTIONS) Assert._assert((bytes > 0) && (bytes <= 8192));
+    if (Assert.VERIFY_ASSERTIONS) 
+    	{Assert._assert(bytes > 0) ;
+    	 Assert._assert(bytes <= 8192);
+    	}
 
     int sz1 = bytes - 1;
 
@@ -528,14 +543,14 @@ public abstract class SegregatedFreeList extends Allocator
    * then free lists are remembered for each block.
    */
   public final void flushFreeLists() {
-    for (int sizeClass = 0; sizeClass < SIZE_CLASSES; sizeClass++)
-      if (!currentBlock.get(sizeClass).isZero()) {
-        Address block = currentBlock.get(sizeClass);
-        Address cell = freeList.get(sizeClass);
-        if (preserveFreeList()) setFreeList(block, cell);
-        currentBlock.set(sizeClass, Address.zero());
-        freeList.set(sizeClass, Address.zero());
-      }
+      for (int sizeClass = 0; sizeClass < SIZE_CLASSES; sizeClass++)
+          if (!currentBlock.get(sizeClass).isZero()) {
+              Address block = currentBlock.get(sizeClass);
+              Address cell = freeList.get(sizeClass);
+              if (preserveFreeList()) setFreeList(block, cell);
+              currentBlock.set(sizeClass, Address.zero());
+              freeList.set(sizeClass, Address.zero());
+          }
   }
 
   /**
@@ -543,16 +558,16 @@ public abstract class SegregatedFreeList extends Allocator
    * list. 
    */
   public final void restoreFreeLists() {
-    for (int sizeClass = 0; sizeClass < SIZE_CLASSES; sizeClass++) {
-      Address block = firstBlock.get(sizeClass);
-      currentBlock.set(sizeClass, block);
-      if (block.isZero()) {
-        freeList.set(sizeClass, Address.zero());
-      } else if (preserveFreeList()) {
-        freeList.set(sizeClass, getFreeList(block));
-      } else
-        freeList.set(sizeClass, advanceToBlock(block, sizeClass));
-    }
+      for (int sizeClass = 0; sizeClass < SIZE_CLASSES; sizeClass++) {
+          Address block = firstBlock.get(sizeClass);
+          currentBlock.set(sizeClass, block);
+          if (block.isZero()) {
+              freeList.set(sizeClass, Address.zero());
+          } else if (preserveFreeList()) {
+              freeList.set(sizeClass, getFreeList(block));
+          } else
+              freeList.set(sizeClass, advanceToBlock(block, sizeClass));
+      }
   }
 
   /****************************************************************************
@@ -598,25 +613,38 @@ public abstract class SegregatedFreeList extends Allocator
    */
   protected final void sweepBlocks() {
     for (int sizeClass = 0; sizeClass < SIZE_CLASSES; sizeClass++) {
-      Address block = firstBlock.get(sizeClass);
+        Address endfl = Address.zero();
+      Address first = firstBlock.get(sizeClass);
+      Address block = first;
       clearBucketList();
-      Extent blockSize = Extent.fromInt(BlockAllocator.blockSize(blockSizeClass[sizeClass]));
+      Extent blockSize = Extent.fromInt(
+              BlockAllocator.blockSize(blockSizeClass[sizeClass]));
       while (!block.isZero()) {
         /* first check to see if block is completely free and if possible
          * free the entire block */
         Address next = BlockAllocator.getNextBlock(block);
         int liveness = getLiveness(block, blockSize, SORT_FREE_BLOCKS);
-        if (liveness == 0)
+        if (liveness == 0 && (!CountPages.counting || !firstCount))
           freeBlock(block, sizeClass);
-        else if (!LAZY_SWEEP)
-          setFreeList(block, makeFreeListFromLiveBits(block, sizeClass));
+        else if (!LAZY_SWEEP) {
+            endfl = makeFreeListFromLiveBits(block, sizeClass, endfl);
+            setFreeList(block, endfl);
+        }
         else if (SORT_FREE_BLOCKS)
           addToBlockBucket(block, liveness);
         block = next;
       }
       if (SORT_FREE_BLOCKS) reestablishBlockFreeList(sizeClass);
+      /* jfree added -> */
+      if (firstCount || fixBug) {
+          if (!first.isZero())
+              setFreeList(first, endfl);
+      }
     }
   }
+
+
+  static boolean fixBug = true;
 
   /**
    * Add a block to a liveness bucket according to the specified
@@ -764,12 +792,14 @@ public abstract class SegregatedFreeList extends Allocator
    * Clear all live bits
    */
   public static final void zeroLiveBits(Address start, Address end) {
-    Extent bytes = Extent.fromInt(EmbeddedMetaData.BYTES_IN_REGION>>LOG_LIVE_COVERAGE);
-    while (start.LT(end)) {
-      Address metadata = EmbeddedMetaData.getMetaDataBase(start).add(SegregatedFreeList.META_DATA_OFFSET);
-      Memory.zero(metadata, bytes);
-      start = start.add(EmbeddedMetaData.BYTES_IN_REGION);
-    }
+      Extent bytes = Extent.fromInt(
+              EmbeddedMetaData.BYTES_IN_REGION>>LOG_LIVE_COVERAGE);
+      while (start.LT(end)) {
+          Address metadata = EmbeddedMetaData.
+              getMetaDataBase(start).add(SegregatedFreeList.META_DATA_OFFSET);
+          Memory.zero(metadata, bytes);
+          start = start.add(EmbeddedMetaData.BYTES_IN_REGION);
+      }
   }
 
   /**
@@ -826,49 +856,55 @@ public abstract class SegregatedFreeList extends Allocator
    * @param sizeClass The size class for the block
    * @return The head of the new free list
    */
-  protected final Address makeFreeListFromLiveBits(Address block, 
-                                                      int sizeClass)
+  protected final Address makeFreeListFromLiveBits(
+          Address block, int sizeClass, Address endfl)
     throws InlinePragma {
     Extent cellBytes = Extent.fromInt(cellSize[sizeClass]);
     Address cellCursor = block.add(blockHeaderSize[sizeClass]);
-    Extent blockSize = Extent.fromInt(BlockAllocator.blockSize(blockSizeClass[sizeClass]));
+    Extent blockSize = 
+        Extent.fromInt(BlockAllocator.blockSize(blockSizeClass[sizeClass]));
     Address end = block.add(blockSize);
-    Address nextFree = Address.zero();
+    Address nextFree;
+    if (firstCount || fixBug)
+        nextFree = endfl; 
+    else 
+        nextFree = Address.zero();
+
     Address nextCellCursor = cellCursor.add(cellBytes);
     Address liveCursor = alignToLiveStride(cellCursor);
     Address liveWordCursor = getLiveWordAddress(liveCursor);
     boolean isLive = false;
     while (liveCursor.LT(end)) {
-      Word live = liveWordCursor.loadWord();
-      if (!live.isZero()) {
-        for (int i=0; i < BITS_IN_WORD; i++) {
-          if (!(live.and(Word.one().lsh(i)).isZero()))
-            isLive = true;
-          liveCursor = liveCursor.add(BYTES_PER_LIVE_BIT);
-          if (liveCursor.GE(nextCellCursor)) {
-            if (!isLive) {
-              free(cellCursor, block, sizeClass, nextFree);
-              nextFree = cellCursor;
+        Word live = liveWordCursor.loadWord();
+        if (!live.isZero()) {
+            for (int i=0; i < BITS_IN_WORD; i++) {
+                if (!(live.and(Word.one().lsh(i)).isZero())
+                        && !wasFreed(cellCursor, sizeClass)) 
+                    isLive = true;
+                liveCursor = liveCursor.add(BYTES_PER_LIVE_BIT);
+                if (liveCursor.GE(nextCellCursor)) {
+                    if (!isLive) {
+                        free(cellCursor, block, sizeClass, nextFree);
+                        nextFree = cellCursor;
+                    }
+                    cellCursor = nextCellCursor;
+                    nextCellCursor = nextCellCursor.add(cellBytes);
+                    isLive = false;
+                }
             }
-            cellCursor = nextCellCursor;
-            nextCellCursor = nextCellCursor.add(cellBytes);
-            isLive = false;
-          }
+        } else {
+            liveCursor = liveCursor.add(BYTES_PER_LIVE_WORD);
+            while (liveCursor.GE(nextCellCursor)) {
+                if (!isLive) {
+                    free(cellCursor, block, sizeClass, nextFree);
+                    nextFree = cellCursor;
+                }
+                cellCursor = nextCellCursor;
+                nextCellCursor = nextCellCursor.add(cellBytes);
+                isLive = false;
+            }
         }
-      } else {
-        liveCursor = liveCursor.add(BYTES_PER_LIVE_WORD);
-        while (liveCursor.GE(nextCellCursor)) {
-          //      while (nextCellCursor.LT(liveCursor)) {
-          if (!isLive) {
-            free(cellCursor, block, sizeClass, nextFree);
-            nextFree = cellCursor;
-          }
-          cellCursor = nextCellCursor;
-          nextCellCursor = nextCellCursor.add(cellBytes);
-          isLive = false;
-        }
-      }
-      liveWordCursor = liveWordCursor.add(BYTES_IN_WORD);
+        liveWordCursor = liveWordCursor.add(BYTES_IN_WORD);
     }
     return nextFree;
   }
@@ -894,7 +930,8 @@ public abstract class SegregatedFreeList extends Allocator
    */
   protected static final Word getMask(Address address, boolean set) 
     throws InlinePragma {
-    int shift = address.toWord().rshl(OBJECT_LIVE_SHIFT).and(WORD_SHIFT_MASK).toInt();
+    int shift = address.toWord().rshl(OBJECT_LIVE_SHIFT).and(
+            WORD_SHIFT_MASK).toInt();
     Word rtn = Word.one().lsh(shift);
     return (set) ? rtn : rtn.not();
   }
@@ -909,7 +946,9 @@ public abstract class SegregatedFreeList extends Allocator
   protected static final Address getLiveWordAddress(Address address)
     throws InlinePragma {
     Address rtn = EmbeddedMetaData.getMetaDataBase(address);
-    return rtn.add(META_DATA_OFFSET).add(EmbeddedMetaData.getMetaDataOffset(address, LOG_LIVE_COVERAGE, LOG_BYTES_IN_WORD));
+    return rtn.add(META_DATA_OFFSET).add(
+            EmbeddedMetaData.getMetaDataOffset(address, 
+                LOG_LIVE_COVERAGE, LOG_BYTES_IN_WORD));
   }
 
   /****************************************************************************
@@ -928,9 +967,177 @@ public abstract class SegregatedFreeList extends Allocator
   private void freeListSanity(Address cell) {
     while (!cell.isZero()) {
       Address next = getNextCell(cell);
-      Log.write("("); Log.write(cell); Log.write("->"); Log.write(next); Log.write(")"); Log.flush();
+      Log.write("("); 
+      Log.write(cell); 
+      Log.write("->"); 
+      Log.write(next); 
+      Log.write(")"); 
+      Log.flush();
       cell = next;
     }
     Log.writeln();
   }
+
+  public static boolean firstCount = false;
+  public void countFreeList() {
+      int res = 0;
+      for (int i = 0; i < freeList.length(); i++)
+          res += freeListCount(freeList.get(i),cellSize[i]);
+      Log.write(" N: ");
+      Log.writeln(res);
+  }
+
+  public int freeListCount(Address cell, int size) {
+      int res = 0;
+      while (!cell.isZero()) {
+          cell = getNextCell(cell);
+          CountPages.gcfreed(size);
+          res += size;
+      }
+      return res;
+  }
+
+
+  /**  jfree - added to support deallocation **/
+
+  /* Adds information to the object's header */
+  private Address alignAndStoreData(Address cell, 
+          int align, int offset, int sizeClass) 
+      throws InlinePragma 
+  {
+      /* Alignment computation */
+      int delta = 0;
+      if (align > MIN_ALIGNMENT)
+          delta = (-offset - cell.toInt()) & (align-1);
+
+      /* The address of the object header */
+      Address addr = cell.add(delta);
+
+      /* sizeClass has SIZE_CLASS_BITS bits. 
+       * delta needs 1 bit (its value is 0 or 4)
+       * encoding uses SIZE_CLASS_BITS + 1: */
+      byte data = (byte)((delta << (SIZE_CLASS_BITS - 2)) | sizeClass);
+
+      /* mark non-free */
+      data |= (1 << 7);
+
+      /* Store data into the object header.
+       * The offset of the available-bits byte is 4, because: 
+       * The status word = second word in the header, offset 4
+       * The available bits = lower-order byte in the status word. 
+       * Little-endian machine => this byte is the first */
+      addr.add(4).store(data);
+
+      return addr;
+  }
+
+  /* from the address (not the object) determines if it
+   * corresponds to an object deallocated via jfree */
+  private boolean wasFreed(Address cell, int sizeClass) throws InlinePragma
+  {
+      /* we don't know what delta was, try both 0 and 4 */
+      Address a1 = cell;
+      Address a2 = cell.add(4);
+
+      /* data bit from each possible delta */
+      byte data1 = a1.add(4).loadByte();
+      byte data2 = a2.add(4).loadByte();
+
+      /* find which match:
+       *  - sizeclass should be the same
+       *  - delta bit should be consistent
+       **/
+      if ((data1 & sizeClass) == sizeClass && 
+              (((data1 >> 5) & 1) == 0))
+          return (data1 >> 7) == 0;
+      if ((data2 & sizeClass) == sizeClass &&
+              (((data2 >> 5) & 1) == 1))
+          return (data2 >> 7) == 0;
+      if (data1 == 0 && data2 == 0)
+          return true;
+      Log.write(" No match :  sz=" );
+      Log.write(sizeClass);
+      Log.write(" d1=");
+      Log.write(data1);
+      Log.write(" d1 & sz=");
+      Log.write(data1 & sizeClass);
+      Log.write(" d2=");
+      Log.write(data2);
+      Log.write(" d2 & sz=");
+      Log.write(data2 & sizeClass);
+      Log.writeln();
+      return false;
+  }
+
+
+  public void freeInMS(ObjectReference object) 
+      throws InlinePragma 
+  {
+      freeInternal(object, true);
+  }
+
+  /* Uses object's header information to deallocate object */
+  public void freeInMallocFree(ObjectReference object) 
+      throws InlinePragma 
+  {
+      freeInternal(object, true);
+  }
+
+
+  public void freeInternal(ObjectReference object, boolean moveToFl)
+      throws InlinePragma
+  {
+      /* The address of the object header */
+      Address addr = ObjectModel.refToAddress(object);
+
+      /* Extract the data byte from the header, at offset 4 */
+      byte data = addr.add(4).loadByte();
+      int mask = (COMPACT_SIZE_CLASSES) ? 31 : 63;
+      int sizeClass = data & mask;
+      int delta = (data & (mask+1)) >> (SIZE_CLASS_BITS - 2);
+
+      /* The address of the cell */
+      Address cell = addr.sub(delta);
+
+      /* The size of the cell */
+      int cellsz = cellSize[sizeClass];
+      CountPages.jfreed(cellsz);
+
+      /* Zero out the contents of the cell */
+      Memory.zeroSmall(cell, Extent.fromIntZeroExtend(cellsz)); 
+
+      if (moveToFl) {
+          /* Place the cell into the free list */
+          Address nextcell = freeList.get(sizeClass);
+          setNextCell(cell, nextcell);
+          freeList.set(sizeClass, cell);
+      }
+  }
+
+  /* Debug utility: shows the bits used by the collector */
+  public static void showDataBits(ObjectReference object, String comment) 
+      throws InlinePragma
+  {
+      /* Extract the data byte from the header, at offset 4 */
+      Address addr = ObjectModel.refToAddress(object);
+      byte data = addr.add(4).loadByte();
+      int mask = (COMPACT_SIZE_CLASSES) ? 31 : 63;
+      int sizeClass = data & mask;
+      int delta = (data & (mask+1)) >> (SIZE_CLASS_BITS - 2);
+
+      Address cell = addr.sub(delta);
+
+      Log.write(comment);
+      Log.write("\t address: ");
+      Log.write(addr);
+      Log.write("   cell: ");
+      Log.write(cell);
+      Log.write(" || (");
+      Log.write(delta);
+      Log.write("-");
+      Log.write(sizeClass);
+      Log.writeln(")");
+
+  }
+
 }

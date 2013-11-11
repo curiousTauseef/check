@@ -727,7 +727,9 @@ final class VM_BuildQuickReferenceMaps implements VM_BytecodeConstants {
         case JBC_d2i:
         case JBC_d2f:
         case JBC_fcmpl:
-        case JBC_fcmpg: {
+        case JBC_fcmpg:
+                       // JREG Extension
+        case JBC_free:{
           currBBStkTop--;
           bcodes.skipInstruction();
           break;

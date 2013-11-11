@@ -9,6 +9,7 @@ import org.mmtk.utility.Treadmill;
 import org.mmtk.utility.Constants;
 import org.mmtk.vm.ObjectModel;
 import org.mmtk.vm.Plan;
+import org.mmtk.utility.Log;
 
 import org.vmmagic.pragma.*;
 import org.vmmagic.unboxed.*;
@@ -37,9 +38,12 @@ public final class LargeObjectSpace extends Space
    *
    * Class variables
    */
-  public static final int LOCAL_GC_BITS_REQUIRED = 1;
+  public static final int LOCAL_GC_BITS_REQUIRED = 2;
   public static final int GLOBAL_GC_BITS_REQUIRED = 0;
   public static final Word MARK_BIT_MASK = Word.one();  // ...01
+  /* FREE mask: used to stop the memory scanning process
+   *   When free bit is = 1 we stop scanning */
+  public static final Word FREE_BIT_MASK = Word.one().lsh(1);  // ...10
 
   /****************************************************************************
    *
@@ -233,6 +237,10 @@ public final class LargeObjectSpace extends Space
    */
   public final ObjectReference traceObject(ObjectReference object)
     throws InlinePragma {
+    if (isFreed(object)) {
+        Log.write("Large object was freed ... not scanning \n");
+        return object;
+    }
     if (testAndMark(object, markState)) {
       internalMarkObject(object);
       Plan.getInstance().enqueue(object);
@@ -292,7 +300,34 @@ public final class LargeObjectSpace extends Space
     throws InlinePragma {
     Word oldValue = ObjectModel.readAvailableBitsWord(object);
     Word newValue = oldValue.and(MARK_BIT_MASK.not()).or(markState);
+    /* jfree added */
+    newValue = newValue.or(FREE_BIT_MASK);
     ObjectModel.writeAvailableBitsWord(object, newValue);
+  }
+
+  /* jfree added */
+  public final boolean setFree(ObjectReference object)
+    throws InlinePragma {
+    if (isFreed(object)) {
+            Log.write(" DANGER: set free twice ");
+            Log.write(object);
+        return false;
+    }
+    /* mark the object so that the GC stops scanning at this
+     * point */
+    Word oldValue = ObjectModel.readAvailableBitsWord(object);
+    Word newValue = oldValue.and(FREE_BIT_MASK.not());
+    ObjectModel.writeAvailableBitsWord(object, newValue);
+    return true;
+  }
+
+  /* jfree added */
+  public final boolean isFreed(ObjectReference object)
+    throws InlinePragma 
+  {
+    if (object.isNull()) return true;
+    Word v = ObjectModel.readAvailableBitsWord(object);
+    return !v.and(FREE_BIT_MASK).EQ(FREE_BIT_MASK);
   }
 
   /**
@@ -335,4 +370,9 @@ public final class LargeObjectSpace extends Space
   public final Extent getSize(Address first) {
     return ((FreeListPageResource) pr).getSize(first);
   }
+
+  public final int size(Address first) {
+    return ((FreeListPageResource) pr).pages(first);
+  }
+
 }

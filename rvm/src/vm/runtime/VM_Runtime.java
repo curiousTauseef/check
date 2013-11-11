@@ -1012,4 +1012,14 @@ public class VM_Runtime implements VM_Constants {
   private static void unwindInvisibleStackFrame(VM_Registers registers) {
     registers.unwindStackFrame();
   }
+
+  // JREG Extension
+  /**
+   * Deallocate an object 
+   * */
+  public static void free(Object toFree) throws InlinePragma {
+      //-#if RVM_WITH_FREE
+      MM_Interface.freeObject(toFree);
+      //-#endif
+  }
 }

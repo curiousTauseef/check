@@ -256,6 +256,7 @@ public final class OPT_BC2IR implements OPT_IRGenOptions,
   private void generateHIR() {
     // Constructor initialized generation state to start 
     // generating from bytecode 0, so get the ball rolling.
+      //VM.sysWrite(" ENTERING >>>>>>>> " + gc.method);
     if (DBG_BB || DBG_SELECTED) db("bbl: " + printBlocks());
     generateFrom(0);
     // While there are more blocks that need it, pick one and generate it.
@@ -332,6 +333,7 @@ public final class OPT_BC2IR implements OPT_IRGenOptions,
     endOfBasicBlock = fallThrough = false;
     lastInstr = null;
     bcodes.reset(fromIndex);
+    int total = 0;
     while (true) {
       // Must keep currentBBLE.high up-to-date in case we try to jump into 
       // the middle of the block we're currently generating.  Simply updating 
@@ -342,6 +344,7 @@ public final class OPT_BC2IR implements OPT_IRGenOptions,
         db("parsing " + instrIndex + " " + code + " : 0x" + Integer.toHexString(code));
       }
       OPT_Instruction s = null;
+      total++;
 
       //-#if RVM_WITH_OSR
       lastOsrBarrier = null;
@@ -2442,6 +2445,20 @@ public final class OPT_BC2IR implements OPT_IRGenOptions,
       }
      //-#endif
         
+      // JFREE Extension
+      case JBC_free:
+         {
+             OPT_Operand op = pop().copy();
+             if (op instanceof OPT_RegisterOperand)
+                 s = FreeObject.create(FREE, (OPT_RegisterOperand) op);
+             /*
+             else
+                 VM.sysWrite("Removing operand " + op + 
+                         (op instanceof OPT_ConstantOperand));
+                         */
+         }
+         break;
+
       default:
         OPT_OptimizingCompilerException.UNREACHABLE();
         break;
@@ -4655,7 +4672,8 @@ public final class OPT_BC2IR implements OPT_IRGenOptions,
    */
   private OPT_Operand getLocal(int i) {
     OPT_Operand local = _localState[i];
-    if (DBG_LOCAL || DBG_SELECTED) db("getting local " + i + " for use: " + local);
+    if (DBG_LOCAL || DBG_SELECTED) 
+        db("getting local " + i + " for use: " + local);
     return local.copy();
   }
 

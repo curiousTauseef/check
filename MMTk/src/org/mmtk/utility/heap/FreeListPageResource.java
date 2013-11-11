@@ -182,7 +182,8 @@ public final class FreeListPageResource extends PageResource
     }
   }
 
-  final int pages(Address first) throws InlinePragma {
+  /* jfree - changed to be public to access from LOSpace */
+  public final int pages(Address first) throws InlinePragma {
     return freeList.size(Conversions.bytesToPages(first.diff(start)));
   }
 

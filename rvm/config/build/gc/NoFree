@@ -1,0 +1,5 @@
+# JREG Extension
+   export RVM_WITH_JMTK_INLINE_PLAN=1
+   export RVM_WITH_FREE_PLAN=1
+   export RVM_WITH_GCTRACE=0
+   export RVM_WITH_FREE=0

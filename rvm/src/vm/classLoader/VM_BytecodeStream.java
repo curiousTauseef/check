@@ -472,7 +472,11 @@ public class VM_BytecodeStream implements VM_BytecodeConstants, VM_SizeConstants
     if (VM.VerifyAssertions)
       VM._assert(opcode == JBC_new || opcode == JBC_anewarray ||
                 opcode == JBC_checkcast || opcode == JBC_instanceof ||
-                opcode == JBC_multianewarray);
+                opcode == JBC_multianewarray
+                || // JREG Extensions
+                opcode == JBC_new_in_r || opcode == JBC_anewarray_in_r ||
+                          opcode == JBC_multianewarray_in_r
+                );
     int index = readUnsignedShort();
     return declaringClass.getTypeRef(index);
   }
@@ -485,7 +489,7 @@ public class VM_BytecodeStream implements VM_BytecodeConstants, VM_SizeConstants
    * @see #getPrimitiveArrayType(int)
    */
   public final int getArrayElementType() {
-    if (VM.VerifyAssertions) VM._assert(opcode == JBC_newarray);
+    if (VM.VerifyAssertions) VM._assert(opcode == JBC_newarray || opcode == JBC_newarray_in_r);
     return readUnsignedByte();
   }
 
@@ -498,7 +502,7 @@ public class VM_BytecodeStream implements VM_BytecodeConstants, VM_SizeConstants
    * @see #getPrimitiveArrayType()
    */
   public final VM_Array getPrimitiveArrayType(int etype) {
-    if (VM.VerifyAssertions) VM._assert(opcode == JBC_newarray);
+    if (VM.VerifyAssertions) VM._assert(opcode == JBC_newarray || opcode == JBC_newarray_in_r);
     return VM_Array.getPrimitiveArrayType(etype);
   }
 
@@ -510,7 +514,7 @@ public class VM_BytecodeStream implements VM_BytecodeConstants, VM_SizeConstants
    * @see #getPrimitiveArrayType(int)
    */
   public final VM_Type getPrimitiveArrayType() {
-    if (VM.VerifyAssertions) VM._assert(opcode == JBC_newarray);
+    if (VM.VerifyAssertions) VM._assert(opcode == JBC_newarray || opcode == JBC_newarray_in_r);
     int etype = readUnsignedByte();
     return VM_Array.getPrimitiveArrayType(etype);
   }

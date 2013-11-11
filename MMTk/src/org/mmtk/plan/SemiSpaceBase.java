@@ -1,6 +1,8 @@
 /*
  * (C) Copyright Department of Computer Science,
  * Australian National University. 2002
+ *
+ * JFREE Extension: counting pages
  */
 package org.mmtk.plan;
 
@@ -124,14 +126,16 @@ public class SemiSpaceBase extends StopTheWorldGC implements Uninterruptible {
    */
   public final Address alloc(int bytes, int align, int offset, int allocator)
     throws InlinePragma {
+    Address res; 
     switch (allocator) {
-    case  ALLOC_DEFAULT: return ss.alloc(bytes, align, offset);
-    case ALLOC_IMMORTAL: return immortal.alloc(bytes, align, offset);
-    case      ALLOC_LOS: return los.alloc(bytes, align, offset);
-    default: 
-      if (Assert.VERIFY_ASSERTIONS) Assert.fail("No such allocator");
-      return Address.zero();
+        case  ALLOC_DEFAULT:  res = ss.alloc(bytes, align, offset);
+        case ALLOC_IMMORTAL:  res = immortal.alloc(bytes, align, offset);
+        case      ALLOC_LOS:  res = los.alloc(bytes, align, offset);
+        default: if (Assert.VERIFY_ASSERTIONS) Assert.fail("No such allocator");
+                     res = Address.zero();
     }
+    CountPages.updateCount(); 
+    return res;
   }
 
   /**

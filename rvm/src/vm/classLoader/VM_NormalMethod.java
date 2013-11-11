@@ -605,7 +605,9 @@ public final class VM_NormalMethod
         if (VM.VerifyAssertions) VM._assert(VM.NOT_REACHED);
         break;
 
+        // JREG Extension
       case JBC_new: case JBC_newarray: case JBC_anewarray:
+      case JBC_new_in_r: case JBC_newarray_in_r: case JBC_anewarray_in_r:
         summary |= HAS_ALLOCATION;
         calleeSize += ALLOCATION_COST;
         break;
@@ -629,6 +631,7 @@ public final class VM_NormalMethod
         break;
 
       case JBC_multianewarray:
+      case JBC_multianewarray_in_r:
         summary |= HAS_ALLOCATION;
         calleeSize += CALL_COST;
         break;

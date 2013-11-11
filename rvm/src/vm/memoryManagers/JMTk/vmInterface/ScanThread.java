@@ -328,7 +328,16 @@ public class ScanThread implements VM_Constants, Uninterruptible {
           
           if (VM.VerifyAssertions && VALIDATE_STACK_REFS) {
             ObjectReference ref = refaddr.loadObjectReference();
-            if (!MM_Interface.validRef(ref)) {
+            /* jfree extension --- added isFreed condition */
+          //VM.sysWrite(refaddr); 
+          //VM.sysWrite(":"); 
+          //MM_Interface.dumpRef(ref);  
+          //Address top_ip2 = 
+          //            t.contextRegisters.getInnermostInstructionAddress();
+          //Address top_fp2 = t.contextRegisters.getInnermostFramePointer();
+          //VM_Scheduler.dumpStack( top_ip2, top_fp2 );
+            if (!MM_Interface.isFreed(ref) && 
+                    !MM_Interface.validRef(ref)) {
               VM.sysWrite("\nInvalid ref reported while scanning stack\n");
               printMethodHeader(compiledMethod, fp, ip);
               VM.sysWrite(refaddr); VM.sysWrite(":"); MM_Interface.dumpRef(ref);  

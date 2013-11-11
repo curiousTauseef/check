@@ -1422,6 +1422,10 @@ public class OSR_BytecodeTraverser implements VM_BytecodeConstants,
         }
         break;
       }
+      // JFREE and JREG Extensions
+      case JBC_free:
+        S.pop();
+        break;
       default:
         VM.sysWrite("Unknown bytecode : "+bcode+"\n");
         return false;

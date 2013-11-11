@@ -217,6 +217,19 @@ public interface VM_BytecodeConstants  {
   public static final int JBC_goto_w = 200;
   public static final int JBC_jsr_w = 201;
 
+  /** JREG Extensions: new bytecode */
+  public static final int JBC_create_rh           = 230;
+  public static final int JBC_create_rs           = 231;
+  public static final int JBC_remove_r            = 232;
+  public static final int JBC_new_in_r            = 233;
+  public static final int JBC_anewarray_in_r      = 234;
+  public static final int JBC_newarray_in_r       = 235;
+  public static final int JBC_multianewarray_in_r = 236;
+  public static final int JBC_push_r              = 237;
+  public static final int JBC_begin_fork_r        = 238;
+  public static final int JBC_end_fork_r          = 239;
+  public static final int JBC_free                = 240;
+
   public static final int JBC_impdep1 = 254;
   public static final int JBC_impdep2 = 255;
 
@@ -429,6 +442,8 @@ public interface VM_BytecodeConstants  {
     5, // goto_w
     5, // jsr_w
       //-#if RVM_WITH_OSR
+      // JREG and JFREE Extensions:
+      //-#endif RVM_WITH_OSR
       -2, // 202
       -2, // 203
       -2, // 204
@@ -457,17 +472,17 @@ public interface VM_BytecodeConstants  {
       -2, // 227
       -2, // 228
       -2, // 229
-      -2, // 230
-      -2, // 231
-      -2, // 232
-      -2, // 233
-      -2, // 234
-      -2, // 235
-      -2, // 236
-      -2, // 237
-      -2, // 238
-      -2, // 239
-      -2, // 240
+      2, // 230 createrh
+      2, // 231 creaters
+      2, // 232 remover
+      4, // 233 newinr
+      4, // 234 anewarray
+      3, // 235 newarray
+      5, // 236 multianewarray
+      2, // 237 pushr
+      1, // 238 beginfork
+      1, // 239 endfork
+      1, // 240 free
       -2, // 241
       -2, // 242
       -2, // 243
@@ -483,6 +498,7 @@ public interface VM_BytecodeConstants  {
       -2, // 253
       -1, // impdep1  254
       -2, // 255
+      //-#if RVM_WITH_OSR
       //-#endif RVM_WITH_OSR
   };
 
@@ -692,6 +708,45 @@ public interface VM_BytecodeConstants  {
     "ifnonnull",
     "goto_w",
     "jsr_w",
+    "", // 202
+    "", // 203
+    "", // 204
+    "", // 205
+    "", // 206
+    "", // 207
+    "", // 208
+    "", // 209
+    "", // 210
+    "", // 211
+    "", // 212
+    "", // 213
+    "", // 214
+    "", // 215
+    "", // 216
+    "", // 217
+    "", // 218
+    "", // 219
+    "", // 220
+    "", // 221
+    "", // 222
+    "", // 223
+    "", // 224
+    "", // 225
+    "", // 226
+    "", // 227
+    "", // 228
+    "", // 229
+    "create_rh",
+    "create_rs",
+    "remove_r",
+    "new_in_r",
+    "anewarray_in_r",
+    "newarray_in_r",
+    "multinewarray_in_r",
+    "push_r",
+    "begin_fork_r",
+    "end_fork_r",
+    "free",
   };
 
 }
