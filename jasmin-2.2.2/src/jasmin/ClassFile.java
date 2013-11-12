@@ -403,15 +403,18 @@ public class ClassFile {
     }
 
     //
-    // used for iinc
+    // used for iinc , (jreg: and create_rb i s)
     //
     void plant(String name, int v1, int v2) throws jasError {
         autoNumber();
         if (name.equals("iinc")) {
 	    Insn inst = new IincInsn(v1, v2);
-
             _getCode().addInsn(inst);
-        } else {
+        } else if (name.equals("create_rb")) {
+            InsnInfo insn = InsnInfo.get(name);
+            _getCode().addInsn(new Insn(insn.opcode, v1, v2));
+        }
+        else{
             throw new jasError("Bad arguments for instruction " + name);
         }
     }
@@ -440,6 +443,66 @@ public class ClassFile {
     }
 
     //
+    // used for new_in_r
+    //
+    void plant(String name, int reg, String type) throws jasError {
+        InsnInfo insn = InsnInfo.get(name);
+        CodeAttr code = _getCode();
+        autoNumber();
+        Insn inst = null;
+        if ((name.equals("new_in_r") || name.equals("anewarray_in_r"))
+            &&  insn.args.equals("iclass")) {
+            inst = new jas.Insn(insn.opcode,reg,new jas.ClassCP(type));
+        }
+        else if ( name.equals("newarray_in_r") && insn.args.equals("iatype")) {
+                int atype = 0;
+                if (type.equals("boolean")) {
+                    atype = 4;
+                } else if (type.equals("char")) {
+                    atype = 5;
+                } else if (type.equals("float")) {
+                    atype = 6;
+                } else if (type.equals("double")) {
+                    atype = 7;
+                } else if (type.equals("byte")) {
+                    atype = 8;
+                } else if (type.equals("short")) {
+                    atype = 9;
+                } else if (type.equals("int")) {
+                    atype = 10;
+                } else if (type.equals("long")) {
+                    atype = 11;
+                } else {
+                    throw new jasError("Bad array type: " + name);
+                }
+                inst = new Insn(insn.opcode, reg, atype);
+        }
+        else{
+            throw new jasError("Bad arguments for instruction " + name);
+        }
+    
+        code.addInsn(inst);
+
+    }
+
+    // Used for multianewarray_in_r
+    void plant(String name, String type, int val1, int val2) 
+        throws jas.jasError
+    {
+        InsnInfo insn = InsnInfo.get(name);
+        CodeAttr code = _getCode();
+        Insn inst;
+        autoNumber();
+
+        if (insn.args.equals("imarray")) {
+            inst = new jas.Insn(insn.opcode, val1, new jas.ClassCP(type), val2);
+            code.addInsn(inst);
+        }
+        else {
+            throw new jasError("Bad arguments for instruction " + name);
+        }
+    }
+
     // used for ldc and other instructions that take a numeric argument
     //
     void plant(String name, Number val) throws jasError {

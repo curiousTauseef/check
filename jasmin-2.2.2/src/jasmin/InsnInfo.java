@@ -262,6 +262,18 @@ class InsnInfo {
 
         // special case:
         addInfo("wide", RuntimeConstants.opc_wide, "ignore");
+        // jreg:
+        addInfo("create_ru", RuntimeConstants.opc_create_ru, "i");
+        addInfo("create_rb", RuntimeConstants.opc_create_rb, "ii");
+        addInfo("remove_r", RuntimeConstants.opc_remove_r, "i");
+        addInfo("new_in_r", RuntimeConstants.opc_new_in_r, "iclass");
+        addInfo("anewarray_in_r", RuntimeConstants.opc_anewarray_in_r, "iclass");
+        addInfo("multianewarray_in_r", RuntimeConstants.opc_multianewarray_in_r, "imarray");
+        addInfo("newarray_in_r", RuntimeConstants.opc_newarray_in_r, "iatype");
+        addInfo("push_r", RuntimeConstants.opc_push_r, "i");
+        addInfo("begin_fork_r", RuntimeConstants.opc_begin_fork_r, "");
+        addInfo("end_fork_r", RuntimeConstants.opc_end_fork_r, "");
+        addInfo("free_o", RuntimeConstants.opc_free_o, "");
     }
 
 };

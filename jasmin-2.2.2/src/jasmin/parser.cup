@@ -571,6 +571,16 @@ simple_instruction ::=
             classFile.plant(i, n1, n2);
         :}
     |
+    Insn:i Int:i1 Word:n2      /* jreg: for new,..., */
+        {:
+            classFile.plant(i,i1.intValue(),n2);
+        :}
+    |
+    Insn:i Int:i1 Word:n Int:i2       /* jreg: for multianew */
+        {:
+            classFile.plant(i,n,i1.intValue(),i2.intValue());
+        :}
+    |
     Insn:i Str:n
         {:
             classFile.plantString(i, n);

@@ -3,7 +3,7 @@
  * CodeAttr to build up the code for a method.
  * @see CodeAttr
  * @see RuntimeConstants
- * @author $Author: fqian $
+ * @author $Author: siggi $
  * @version $Revision: 1.1 $
  */
 
@@ -94,6 +94,9 @@ public class Insn implements RuntimeConstants
       case opc_fstore:
       case opc_dstore:
       case opc_astore:
+      case opc_create_ru:
+      case opc_remove_r:
+      case opc_push_r:
         operand = new UnsignedByteWideOperand(val);
         break;
       default:
@@ -208,6 +211,40 @@ public class Insn implements RuntimeConstants
         throw new jasError
           (opcNames[opc] + " does not take a CP item as an argument");
       }
+  }
+
+  public Insn(int opc, int reg, jas.CP type) 
+      throws jas.jasError
+  {
+      this.opc = opc;
+
+      switch (opc) {
+          case opc_new_in_r:
+          case opc_anewarray_in_r:
+              operand = new NewOrAnewarrayInROperand(reg, type);
+              break;
+          default:
+              throw new jasError(opcNames[opc] + " only new_in_r or anewarray_in_r can use this constructor");
+      }
+  }
+
+  public Insn(int opc, int reg, jas.CP type, int dim) throws jas.jasError
+  {
+      this.opc = opc;
+      if (opc == opc_multianewarray_in_r)
+          operand = new MultiANewArrayInROperand(reg, type, dim);
+      else
+          throw new jasError(opcNames[opc] + " only multianewarray_in_r can use this constructor");
+  }
+
+  public Insn(int opc, int reg, int i1) throws jas.jasError
+  {
+      this.opc = opc;
+      if (opc == opc_newarray_in_r || opc == opc_create_rb) 
+          operand = new TwoByteWideOp(reg, i1);
+      else
+          throw new jasError(opcNames[opc] + 
+                  " cant use this this constructor");
   }
 
                                 // This allows the Insn a chance to

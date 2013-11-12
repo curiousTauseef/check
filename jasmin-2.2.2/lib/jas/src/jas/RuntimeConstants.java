@@ -262,6 +262,18 @@ public interface RuntimeConstants {
     public static final int opc_jsr_w = 201;
     public static final int opc_breakpoint = 202;
 
+    public static final int opc_create_ru = 230;
+    public static final int opc_create_rb = 231;
+    public static final int opc_remove_r = 232;
+    public static final int opc_new_in_r = 233;
+    public static final int opc_anewarray_in_r = 234;
+    public static final int opc_newarray_in_r = 235;
+    public static final int opc_multianewarray_in_r = 236;
+    public static final int opc_push_r = 237;
+    public static final int opc_begin_fork_r = 238;
+    public static final int opc_end_fork_r = 239;
+    public static final int opc_free_o = 240;
+
     // for backwards compatibility with 1.0
     public static final int opc_int2byte = opc_i2b;
     public static final int opc_int2char = opc_i2c;
@@ -315,7 +327,15 @@ public interface RuntimeConstants {
         "opc_anewarray", "opc_arraylength", "opc_athrow", "opc_checkcast",
         "opc_instanceof", "opc_monitorenter", "opc_monitorexit", "opc_wide",
         "opc_multianewarray", "opc_ifnull", "opc_ifnonnull", "opc_goto_w",
-        "opc_jsr_w", "opc_breakpoint"
+        "opc_jsr_w", "opc_breakpoint",
+        // filling up to 230
+        "203","204","205","206","207","208","209",
+        "210","211","212","213","214","215","216","217","218","219","220","221",
+        "222","223","224","225","226","227","228","229",
+        // jreg:
+        "opc_create_ru","opc_create_rb","opc_remove_r", "opc_new_in_r",
+        "opc_anewarray_in_r", "opc_newarray_in_r", "multianewarray_in_r",
+        "opc_push_r", "opc_begin_fork_r", "opc_end_fork_r","opc_free_o"
     };
 
     // and their lengths
@@ -328,6 +348,21 @@ public interface RuntimeConstants {
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3,
         3, 3, 3, 3, 3, 3, 3, 3, 2, 99, 99, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3,
-        3, 5, 0, 3, 2, 3, 1, 1, 3, 3, 1, 1, 0, 4, 3, 3, 5, 5, 1
+        3, 5, 0, 3, 2, 3, 1, 1, 3, 3, 1, 1, 0, 4, 3, 3, 5, 5, 1,
+        // Filling up
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0,
+        // jreg commands:
+        /*create_h*/    2,
+        /*create_s*/    2,
+        /*remove_r*/    2,
+        /*new_in_r*/    4,
+        /*anewarray*/   4,
+        /*newarray*/    3,
+        /* multianewa*/ 5,
+        /* push*/       2,
+        /* begin_fork*/ 1,
+        /* end_fork  */ 1,
+        /* free */      1
     };
 }
