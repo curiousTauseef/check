@@ -1,0 +1,19 @@
+We added two classes to represent expressions and statements added from Frex:
+
+src/soot/jimple/JregExpr.java
+src/soot/jimple/JregStmt.java
+
+We changed the implementation of a few classes to incorporate the new types
+in standard visitors and in the code that generates jasmin output:
+
+src/soot/jimple/JasminClass.java
+src/soot/jimple/AbstractStmtSwitch.java
+src/soot/jimple/StmtSwitch.java
+src/soot/AbstractJasminClass.java
+src/soot/toolkits/exceptions/AbstractThrowAnalysis.java
+src/soot/toolkits/exceptions/UnitThrowAnalysis.java
+
+And we removed some print statements from the following files:
+
+src/soot/jimple/toolkits/callgraph/OnFlyCallGraphBuilder.java
+src/soot/jimple/spark/SparkTransformer.java
