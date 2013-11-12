@@ -110,6 +110,10 @@ public abstract class AbstractStmtSwitch implements StmtSwitch
         defaultCase(stmt);
     }
 
+    public void caseJregStmt(JregStmt stmt)
+    {
+      defaultCase(stmt);
+    }
     public void defaultCase(Object obj)
     {
     }

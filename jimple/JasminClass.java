@@ -126,6 +126,7 @@ public class JasminClass extends AbstractJasminClass
             Iterator boxIt = body.getUnitBoxes(true).iterator();
 
             unitToLabel = new HashMap(units.size() * 2 + 1, 0.7f);
+            callsToLabel = new HashMap(units.size() * 2 + 1, 0.7f);
             labelCount = 0;
 
             while(boxIt.hasNext())
@@ -137,6 +138,14 @@ public class JasminClass extends AbstractJasminClass
                     if(!unitToLabel.containsKey(box.getUnit()))
                         unitToLabel.put(box.getUnit(), "label" + labelCount++);
                 }
+            }
+
+        // Include Jreg annotated units into callsToLabel map
+            Iterator invokeIt = frex.common.ir.soot.JregSoot.v().getAnnotatedUnits(method);
+            while (invokeIt.hasNext()){
+                InvokeExpr v = (InvokeExpr) invokeIt.next();
+                if (!callsToLabel.containsKey(v))
+                    callsToLabel.put(v, "label" + labelCount++);
             }
         }
 
@@ -1297,6 +1306,15 @@ public class JasminClass extends AbstractJasminClass
                 }
             }
 
+            public void caseJregStmt(JregStmt s)
+            {
+                if (s.hasValue()){
+                    emitValue(s.getValue());
+                    emit(s.getJasminLine(),-1);
+                }
+                else
+                    emit(s.getJasminLine());
+            }
             public void defaultCase(Stmt s)
             {
                 throw new RuntimeException("invalid stmt: " + s);
@@ -2055,6 +2073,11 @@ public class JasminClass extends AbstractJasminClass
                 for(int i = 0; i < m.parameterTypes().size(); i++)
                     emitValue(v.getArg(i));
 
+                if(callsToLabel.containsKey(v)){
+                    emit("; jreg added-> to attach attribute at call opcode");
+                    emit(callsToLabel.get(v) + ":");
+                }
+
                 emit("invokeinterface " + slashify(m.declaringClass().getName()) + "/" +
                     m.name() + jasminDescriptorOf(m) + " " + (argCountOf(m) + 1),
                     -(argCountOf(m) + 1) + sizeOfType(m.returnType()));
@@ -2447,6 +2470,12 @@ public class JasminClass extends AbstractJasminClass
 
             }
 
+            public String jregprefix(Expr v){
+              if (v instanceof JregExpr)
+                return ((JregExpr)v).getPrefix();
+              else return " ";
+            }
+
             public void caseNewArrayExpr(NewArrayExpr v)
             {
                 Value size = v.getSize();
@@ -2454,11 +2483,14 @@ public class JasminClass extends AbstractJasminClass
                 emitValue(size);
 
                 if(v.getBaseType() instanceof RefType)
-                    emit("anewarray " + slashify(v.getBaseType().toString()), 0);
+                    emit("anewarray" + jregprefix(v) + 
+                            slashify(v.getBaseType().toString()), 0);
                 else if(v.getBaseType() instanceof ArrayType)
-                    emit("anewarray " + jasminDescriptorOf(v.getBaseType()), 0);
+                    emit("anewarray" + jregprefix(v) + 
+                            jasminDescriptorOf(v.getBaseType()), 0);
                 else
-                    emit("newarray " + v.getBaseType().toString(), 0);
+                    emit("newarray" + jregprefix(v) + 
+                            v.getBaseType().toString(), 0);
             }
 
             public void caseNewMultiArrayExpr(NewMultiArrayExpr v)
@@ -2468,17 +2500,17 @@ public class JasminClass extends AbstractJasminClass
                 for(int i = 0; i < sizes.size(); i++)
                     emitValue((Value) sizes.get(i));
 
-                emit("multianewarray " + jasminDescriptorOf(v.getBaseType()) + " " + sizes.size(), -sizes.size() + 1);
+                emit("multianewarray" + jregprefix(v) + jasminDescriptorOf(v.getBaseType()) + " " + sizes.size(), -sizes.size() + 1);
             }
 
             public void caseNewExpr(NewExpr v)
             {
-                emit("new " + slashify(v.getBaseType().toString()), 1);
+                emit("new" + jregprefix(v) + slashify(v.getBaseType().toString()), 1);
             }
 
             public void caseNewInvokeExpr(NewInvokeExpr v)
             {
-                emit("new " + slashify(v.getBaseType().toString()), 1);
+                emit("new" + jregprefix(v) + slashify(v.getBaseType().toString()), 1);
                 emit("dup", 1);
                 
                 SootMethodRef m = v.getMethodRef();
@@ -2638,6 +2670,11 @@ public class JasminClass extends AbstractJasminClass
                 for(int i = 0; i < m.parameterTypes().size(); i++)
                     emitValue(v.getArg(i));
 
+                if(callsToLabel.containsKey(v)){
+                    emit("; jreg added-> to attach attribute at call opcode");
+                    emit(callsToLabel.get(v) + ":");
+                }
+
                 emit("invokespecial " + slashify(m.declaringClass().getName()) + "/" +
                     m.name() + jasminDescriptorOf(m),
                     -(argCountOf(m) + 1) + sizeOfType(m.returnType()));
@@ -2649,6 +2686,11 @@ public class JasminClass extends AbstractJasminClass
 
                 for(int i = 0; i < m.parameterTypes().size(); i++)
                     emitValue(v.getArg(i));
+
+                if(callsToLabel.containsKey(v)){
+                    emit("; jreg added-> to attach attribute at call opcode");
+                    emit(callsToLabel.get(v) + ":");
+                }
 
                 emit("invokestatic " + slashify(m.declaringClass().getName()) + "/" +
                     m.name() + jasminDescriptorOf(m),
@@ -2751,6 +2793,11 @@ public class JasminClass extends AbstractJasminClass
 
                 for(int i = 0; i < m.parameterTypes().size(); i++)
                     emitValue(v.getArg(i));
+
+                if(callsToLabel.containsKey(v)){
+                    emit("; jreg added-> to attach attribute at call opcode");
+                    emit(callsToLabel.get(v) + ":");
+                }
 
                 emit("invokevirtual " + slashify(m.declaringClass().getName()) + "/" +
                     m.name() + jasminDescriptorOf(m),

@@ -42,6 +42,8 @@ import soot.baf.*;
 public abstract class AbstractJasminClass
 {
     protected Map unitToLabel;
+    /* jreg - to add labels on each call site */
+    protected Map callsToLabel;
     protected Map localToSlot;
     protected Map subroutineToReturnAddressSlot;
 
@@ -640,6 +642,9 @@ public abstract class AbstractJasminClass
            return;
 
        // Emit prologue
+            // JREG: prologue
+            String s = frex.common.ir.soot.JregSoot.v().getMethodProloge(method);
+            if (s != null) emit(s);
             emit(".method " + Modifier.toString(method.getModifiers()) + " " +
                  method.getName() + jasminDescriptorOf(method.makeRef()));
 
@@ -684,10 +689,16 @@ public abstract class AbstractJasminClass
                 throw new RuntimeException("method: " + method.getName() + " has no active body!");
             else
                 emitMethodBody(method);
+            // Emit jreg code-dependent annotations
+            s = frex.common.ir.soot.JregSoot.v().getMethodCodeAttribute(method, 
+                    callsToLabel);
+            if (s!=null) emit(s);
        }
        
        // Emit epilogue
             emit(".end method");
+            s = frex.common.ir.soot.JregSoot.v().getMethodAttribute(method);
+            if (s != null) emit(s);
 
 	    Iterator it =  method.getTags().iterator();
 	    while(it.hasNext()) {

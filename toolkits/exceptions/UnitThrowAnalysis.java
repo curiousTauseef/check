@@ -451,6 +451,8 @@ public class UnitThrowAnalysis extends AbstractThrowAnalysis {
 	    result = result.add(mightThrowExplicitly(s));
 	}
 
+    public void caseJregStmt(JregStmt s) {}
+
 	public void defaultCase(Object obj) {
 	}
     }
@@ -744,4 +746,5 @@ public class UnitThrowAnalysis extends AbstractThrowAnalysis {
 	    result = result.add(mightThrow(expr.getMethod()));
 	}
     }
+
 }

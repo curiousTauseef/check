@@ -50,5 +50,6 @@ public interface StmtSwitch extends Switch
     public abstract void caseReturnVoidStmt(ReturnVoidStmt stmt);
     public abstract void caseTableSwitchStmt(TableSwitchStmt stmt);
     public abstract void caseThrowStmt(ThrowStmt stmt);
+    public abstract void caseJregStmt(JregStmt stmt);
     public abstract void defaultCase(Object obj);
 }

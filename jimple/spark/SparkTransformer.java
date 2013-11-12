@@ -197,7 +197,7 @@ public class SparkTransformer extends SceneTransformer
     }
     protected static void reportTime( String desc, Date start, Date end ) {
         long time = end.getTime()-start.getTime();
-        G.v().out.println( "[Spark] "+desc+" in "+time/1000+"."+(time/100)%10+" seconds." );
+        //G.v().out.println( "[Spark] "+desc+" in "+time/1000+"."+(time/100)%10+" seconds." );
     }
     protected static void doGC() {
         // Do 5 times because the garbage collector doesn't seem to always collect
