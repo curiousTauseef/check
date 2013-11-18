@@ -1,4 +1,4 @@
-
+<?xml version = '1.0' encoding = 'ISO-8859-1' ?>
 <?xml-stylesheet type="text/xsl" href="soot_options.xsl"  ?>
 <options>
 	<intro>
@@ -159,14 +159,6 @@ Runs interactively, with Soot providing detailed information as it iterates thro
 </long_desc>
 		</boolopt>
 		<boolopt>
-			<name>Unfriendly Mode</name>
-			<alias>unfriendly-mode</alias>
-			<short_desc>Allow Soot to run with no command-line options</short_desc>
-			<long_desc>
-With this option, Soot does not stop even if it received no command-line options. Useful when setting Soot options programmatically and then calling soot.Main.main() with an empty list.
-</long_desc>
-		</boolopt>
-		<boolopt>
 			<name>Application Mode</name>
 			<alias>app</alias>
 			<short_desc>Run in application mode</short_desc>
@@ -272,24 +264,8 @@ followed <var>java.home</var><tt>/lib/rt.jar</tt>, where
 separator.</p>
 </long_desc>
 		</stropt>
-		<boolopt>
-			<name>Prepend classpath</name>
-			<alias>pp</alias>
-			<alias>prepend-classpath</alias>
-			<short_desc>Prepend the given soot classpath to the default classpath.</short_desc>
-			<long_desc>
-<p>
-Instead of replacing the default soot classpath with the classpath given on the command line,
-prepent it with that classpath.
-The default classpath holds whatever is set in the CLASSPATH environment variable,
-followed by rt.jar (resolved through the JAVA-UNDERSCORE-HOME environment variable).
-If whole-program mode is enabled, jce.jar is also appended in the end.
-</p>
-</long_desc>
-		</boolopt>
 		<listopt>
 			<name>Process Directories</name>
-			<alias>process-path</alias>
 			<alias>process-dir</alias>
 			<set_arg_label>dir</set_arg_label>
 			<short_desc>Process all classes found in <use_arg_label/></short_desc>
@@ -298,7 +274,6 @@ If whole-program mode is enabled, jce.jar is also appended in the end.
 Add all classes found in <use_arg_label/> to the set of argument classes
 which is analyzed and transformed by Soot.  You can specify the
 option more than once, to add argument classes from multiple directories.
-You can also state JAR files.
 </p>
 <p>
 If subdirectories of <use_arg_label/> contain <tt>.class</tt> or
@@ -369,16 +344,6 @@ the Soot classpath.  Fall back to <tt>.class</tt> files only when
 unable to find a <tt>.java</tt> file.
 </long_desc>
 			</value>
-			<value>
-				<name>APK File</name>
-				<alias>apk</alias>
-				<short_desc>Favour APK files as Soot source</short_desc>
-				<long_desc>
-Try to resolve classes first from <tt>.apk</tt> (Android Package) files found in
-the Soot classpath. Fall back to <tt>.class</tt>, <tt>.java</tt> or <tt>.jimple</tt>
-files only when unable to find a class in <tt>.apk</tt> files.
-</long_desc>
-			</value>
 		</multiopt>
 		<boolopt>
 			<name>Force complete resolver</name>
@@ -408,24 +373,14 @@ incorrect results.
 </long_desc>
 		</boolopt>
 		<boolopt>
-			<name>Allow Phantom References</name>
-			<alias>no-bodies-for-excluded</alias>
-			<short_desc>Do not load bodies for excluded classes</short_desc>
-			<long_desc>
-Prevents Soot from loading method bodies for all excluded classes (see exclude option), even
-when running in whole-program mode. This is useful for computing a shallow points-to analysis
-that does not, for instance, take into account the JDK. Of course, such analyses may be unsound.
-You get what you are asking for.
-</long_desc>
-		</boolopt>
-		<boolopt>
-			<name>Use J2ME mode</name>
-			<alias>j2me</alias>
+			<name>Use old Type Assigner </name>
+			<alias>use-old-type-assigner</alias>
 			<default>false</default>
-			<short_desc>Use J2ME mode; changes assignment of types</short_desc>
+			<short_desc>Use old type assigner - may be slower</short_desc>
 			<long_desc>
-Use J2ME mode. J2ME does not have class Cloneable nor Serializable, so we have
-to change type assignment to not refer to those classes.			
+Disable the reimplemented type assigner. This uses improved data 
+structures to provide a significant performance benefit, but has
+not yet been thoroughly tested.
 </long_desc>
 		</boolopt>
 		<stropt>
@@ -435,21 +390,12 @@ to change type assignment to not refer to those classes.
 			<short_desc>Sets the main class for whole-program analysis.</short_desc>
 			<long_desc>
 <p>
-By default, the first class encountered with a main method is treated
+By default, the first class mentioned on the command-line is treated
 as the main class (entry point) in whole-program analysis. This option
 overrides this default.
 </p>
 </long_desc>
 		</stropt>
-		<boolopt>
-			<name>Use Polyglot frontend</name>
-			<alias>polyglot</alias>
-			<default>false</default>
-			<short_desc>Use Java 1.4 Polyglot frontend instead of JastAdd</short_desc>
-			<long_desc>
-Use Java 1.4 Polyglot frontend instead of JastAdd, which supports Java 5 syntax.
-</long_desc>
-		</boolopt>
 	</section>
 	<section>
 		<name>Output Options</name>
@@ -608,15 +554,6 @@ Virtual Machine.
 				<short_desc>Produce dava-decompiled <tt>.java</tt> files</short_desc>
 				<long_desc>
 Produce <tt>.java</tt> files generated by the Dava decompiler.
-</long_desc>
-			</value>
-			<value>
-				<name>Jimle Template File</name>
-				<alias>t</alias>
-				<alias>template</alias>
-				<short_desc>Produce <tt>.java</tt> files with Jimple templates.</short_desc>
-				<long_desc>
-Produce <tt>.java</tt> files with Jimple templates.
 </long_desc>
 			</value>
 		</multiopt>
@@ -787,16 +724,6 @@ includes those names.  Otherwise, Soot gives variables generic
 names based on their types.
 </long_desc>
 				</boolopt>
-				<boolopt>
-					<name>Preserve source-level annotations</name>
-					<alias>preserve-source-annotations</alias>
-                    <default>false</default>
-					<short_desc/>
-					<long_desc>
-Preserves annotations of retention type SOURCE. (for
-everything but package and local variable annotations) 
-</long_desc>
-				</boolopt>
 				<sub_phase>
 					<name>Local Splitter</name>
 					<alias>jb.ls</alias>
@@ -867,48 +794,11 @@ accommodate the values stored in them over the course of the
 method.
 </long_desc>
 					<name>Type Assigner</name>
-                    <class>JBTROptions</class>
 					<alias>jb.tr</alias>
 					<boolopt>
 						<name>Enabled</name>
 						<alias>enabled</alias>
                                                 <default>true</default>
-					</boolopt>
-					<boolopt>
-						<name>Ignore wrong static-ness</name>
-						<alias>ignore-wrong-staticness</alias>
-                        <default>false</default>
-					<short_desc>Ignores errors due to wrong staticness</short_desc>
-					<long_desc>
-Some projects have been shown to contain invalid bytecode that tries to access
-a static field or method in a non-static way or the other way around. The VM's bytecode
-verifier will reject such bytecode when loaded into the VM. This option, when enabled,
-causes to create Jimple bodies in such cases nontheless, ignoring the error.
-</long_desc>
-					</boolopt>
-					<boolopt>
-						<name>Use older type assigner</name>
-						<alias>use-older-type-assigner</alias>
-                        <default>false</default>
-					<short_desc>Enables the older type assigner</short_desc>
-					<long_desc>
-This enables the older type assigner that was in use until May 2008.
-The current type assigner is a reimplementation by Ben Bellamy
-that uses an entirely new and faster algorithm which always assigns
-the most narrow type possible. If compare-type-assigners is on,
-this option causes the older type assigner to execute first.
-(Otherwise the newer one is executed first.)
-</long_desc>
-					</boolopt>
-					<boolopt>
-						<name>Compare type assigners</name>
-						<alias>compare-type-assigners</alias>
-                        <default>false</default>
-					<short_desc>Compares Ben Bellamy's and the older type assigner</short_desc>
-					<long_desc>
-Enables comparison (both runtime and results) of Ben Bellamy's type assigner with the
-older type assigner that was in Soot.
-</long_desc>
 					</boolopt>
 				</sub_phase>
 				<sub_phase>
@@ -1459,41 +1349,7 @@ traps whose catch blocks are empty.
 					</boolopt>
 				</sub_phase>
 			</phase>
-      <phase>
-        <name>Whole Jimple Pre-processing Pack</name>
-        <alias>wjpp</alias>
-        <short_desc>Whole Jimple Pre-processing Pack</short_desc>
-        <long_desc>
-<p>
-This pack allows you to insert pre-processors that are run before
-call-graph construction. Only enabled in whole-program mode.</p>
-<p>
-In an unmodified copy of Soot, this pack is empty.</p>
-        </long_desc>        
-        <boolopt>
-          <name>Enabled</name>
-          <alias>enabled</alias>
-          <default>true</default>
-        </boolopt>
-      </phase>
-      <phase>
-        <name>Whole Shimple Pre-processing Pack</name>
-        <alias>wspp</alias>
-        <short_desc>Whole Shimple Pre-processing Pack</short_desc>
-        <long_desc>
-<p>
-This pack allows you to insert pre-processors that are run before
-call-graph construction. Only enabled in whole-program Shimple mode.</p>
-<p>
-In an unmodified copy of Soot, this pack is empty.</p>
-        </long_desc>        
-        <boolopt>
-          <name>Enabled</name>
-          <alias>enabled</alias>
-          <default>true</default>
-        </boolopt>
-      </phase>      			
-      <radio_phase>
+			<radio_phase>
 				<name>Call Graph Constructor</name>
 				<alias>cg</alias>
                                 <class>CGOptions</class>
@@ -1584,29 +1440,6 @@ that must have already been executed. Since these static initializers cannot be
 executed again, the corresponding call graph edges are removed from the call graph.
 </long_desc>
                                 </boolopt>
-                                <stropt>
-                                        <name>Reflection Log</name>
-                                        <alias>reflection-log</alias>
-                                        <short_desc>Uses a reflection log to resolve reflective calls.</short_desc>
-                                        <long_desc>Load a reflection log
-from the given file and use this log to resolve reflective call sites. Note that
-when a log is given, the following other options have no effect: safe-forname,
-safe-newinstance.                                         
-</long_desc>
-                                </stropt>
-                                <stropt>
-                                        <name>Guarding strategy</name>
-                                        <alias>guards</alias>
-                                        <default>ignore</default>
-                                        <short_desc>Describes how to guard the program from unsound assumptions.</short_desc>
-                                        <long_desc>Using a reflection log is only sound for method executions that were logged.
-Executing the program differently may be unsound. Soot can insert guards at program points for which the reflection log
-contains no information. When these points are reached (because the program is executed differently) then the follwing will happen,
-depending on the value of this flag. ignore: no guard is inserted, the program executes normally but under unsound assumptions.
-print: the program prints a stack trace when reaching a porgram location that was not traced but continues to run. throw (default):
-the program throws an Error instead.                                                                                                
-</long_desc>
-                                </stropt>
 				<sub_phase>
 					<name>Class Hierarchy Analysis</name>
 					<alias>cg.cha</alias>
@@ -1765,16 +1598,6 @@ individually.
                                                         <short_desc>Simulate effects of native methods in standard class library</short_desc>
 							<long_desc>
 When this option is set to true, the effects of native methods in the standard Java class library are simulated.
-        </long_desc>
-						</boolopt>
-						<boolopt>
-							<name>Treat EMPTY as Alloc</name>
-							<alias>empties-as-allocs</alias>
-							<default>false</default>
-                                                        <short_desc>Treat singletons for empty sets etc. as allocation sites</short_desc>
-							<long_desc>
-When this option is set to true, Spark treats references to <code>EMPTYSET</code>, <code>EMPTYMAP</code>, and 
-<code>EMPTYLIST</code> as allocation sites for <code>HashSet</code>, <code>HashMap</code> and <code>LinkedList</code> objects respectively, and references to <code>Hashtable.emptyIterator</code> as allocation sites for <code>Hashtable.EmptyIterator</code>. This enables subsequent analyses to differentiate different uses of Java's immutable empty collections.
         </long_desc>
 						</boolopt>
 						<boolopt>
@@ -1949,23 +1772,6 @@ an algorithm based on the merge step from merge sort.
 </long_desc>
 							</value>
 							<value>
-								<name>Heintze</name>
-								<alias>heintze</alias>
-								<short_desc>Heintze's shared bit-vector and overflow list representation</short_desc>
-								<long_desc>Heintze's representation has elements represented by a bit-vector + a small
-									'overflow' list of some maximum number of elements.  The bit-vectors can be shared
-									by multiple points-to sets, while the overflow lists are not.
-								</long_desc>
-							</value>
-							<value>
-								<name>Shared List</name>
-								<alias>sharedlist</alias>
-								<short_desc>Shared list representation</short_desc>
-								<long_desc>Shared List stores its elements in a linked list, and might share
-									its tail with other similar points-to sets.
-								</long_desc>
-							</value>
-							<value>
 								<name>Double</name>
 								<alias>double</alias>
 								<default/>
@@ -1978,6 +1784,13 @@ old pointed-to objects that have been propagated and need not be
 reconsidered. This allows the propagation algorithms to be incremental,
 often speeding them up significantly.
 </long_desc>
+							</value>
+							<value>
+								<name>Shared bit-vector</name>
+								<alias>shared</alias>
+                                                                <short_desc>Shared bit-vector representation</short_desc>
+                                                                <long_desc>This is a bit-vector representation, in which duplicate bit-vectors are found and stored only once to save memory.</long_desc>
+
 							</value>
                                                         <short_desc>Select points-to set implementation</short_desc>
 							<long_desc>
@@ -2027,21 +1840,11 @@ an algorithm based on the merge step from merge sort.
 </long_desc>
 							</value>
 							<value>
-								<name>Heintze</name>
-								<alias>heintze</alias>
-								<short_desc>Heintze's shared bit-vector and overflow list representation</short_desc>
-								<long_desc>Heintze's representation has elements represented by a bit-vector + a small
-									'overflow' list of some maximum number of elements.  The bit-vectors can be shared
-									by multiple points-to sets, while the overflow lists are not.
-								</long_desc>
-							</value>
-							<value>
-								<name>Shared List</name>
-								<alias>sharedlist</alias>
-								<short_desc>Shared list representation</short_desc>
-								<long_desc>Shared List stores its elements in a linked list, and might share
-									its tail with other similar points-to sets.
-								</long_desc>
+								<name>Shared bit-vector</name>
+								<alias>shared</alias>
+                                                                <short_desc>Shared bit-vector representation</short_desc>
+                                                                <long_desc>This is a bit-vector representation, in which duplicate bit-vectors are found and stored only once to save memory.</long_desc>
+
 							</value>
                                                         <short_desc>Select implementation of points-to set for old part of double set</short_desc>
 							<long_desc>
@@ -2093,24 +1896,14 @@ binary search, and set union and intersection are computed using
 an algorithm based on the merge step from merge sort.
 </long_desc>
 							</value>
-   							<value>
-								<name>Heintze</name>
-								<alias>heintze</alias>
-								<short_desc>Heintze's shared bit-vector and overflow list representation</short_desc>
-								<long_desc>Heintze's representation has elements represented by a bit-vector + a small
-									'overflow' list of some maximum number of elements.  The bit-vectors can be shared
-									by multiple points-to sets, while the overflow lists are not.
-								</long_desc>
-							</value>
 							<value>
-								<name>Shared List</name>
-								<alias>sharedlist</alias>
-								<short_desc>Shared list representation</short_desc>
-								<long_desc>Shared List stores its elements in a linked list, and might share
-									its tail with other similar points-to sets.
-								</long_desc>
+								<name>Shared bit-vector</name>
+								<alias>shared</alias>
+                                                                <short_desc>Shared bit-vector representation</short_desc>
+                                                                <long_desc>This is a bit-vector representation, in which duplicate bit-vectors are found and stored only once to save memory.</long_desc>
+
 							</value>
-                                                     <short_desc>Select implementation of points-to set for new part of double set</short_desc>
+                                                        <short_desc>Select implementation of points-to set for new part of double set</short_desc>
 							<long_desc>
 Select an implementation for sets of new objects in the double
 points-to set implementation.
@@ -2230,203 +2023,6 @@ When this option is set to true, Spark computes and prints various
 cryptic statistics about the size of the points-to sets computed.
         </long_desc>
 						</boolopt>
-					</section>
-					<section>
-						<name>Context-sensitive refinement</name>
-						<boolopt>
-							<name>Demand-driven refinement-based context-sensitive points-to analysis</name>
-							<alias>cs-demand</alias>
-							<default>false</default>
-							<short_desc>After running Spark, refine points-to sets on demand with context information</short_desc>
-							<long_desc>
-When this option is set to true, Manu Sridharan's demand-driven,
-refinement-based points-to analysis (PLDI 06) is applied after Spark
-was run.
-        					</long_desc>
-						</boolopt>
-						<boolopt>
-							<name>Create lazy points-to sets</name>
-							<alias>lazy-pts</alias>
-							<default>true</default>
-							<short_desc>Create lazy points-to sets that create context information only when needed.</short_desc>
-							<long_desc>
-When this option is disabled, context information is computed for every query to the reachingObjects method.
-When it is enabled, a call to reachingObjects returns a lazy wrapper object that contains a context-insensitive
-points-to set. This set is then automatically refined with context information when necessary, i.e.
-when we try to determine the intersection with another points-to set and this intersection seems to be
-non-empty.							
-        					</long_desc>
-						</boolopt>
-						<intopt>
-							<name>Maximal traversal</name>
-							<alias>traversal</alias>
-							<default>75000</default>
-							<short_desc>Make the analysis traverse at most this number of nodes per query.</short_desc>
-							<long_desc>
-Make the analysis traverse at most this number of nodes per query.
-This quota is evenly shared between multiple passes (see next option).
-        					</long_desc>
-						</intopt>
-						<intopt>
-							<name>Maximal number of passes</name>
-							<alias>passes</alias>
-							<default>10</default>
-							<short_desc>Perform at most this number of refinement iterations.</short_desc>
-							<long_desc>
-Perform at most this number of refinement iterations.
-Each iteration traverses at most ( traverse / passes ) nodes.
-        					</long_desc>
-						</intopt>
-					</section>
-					<section>
-						<name>Geometric context-sensitive analysis from ISSTA 2011</name>
-						<boolopt>
-						  <name>Geometric, context-sensitive points-to analysis</name>
-						  <alias>geom-pta</alias>
-						  <default>false</default>
-						  <short_desc>This switch enables/disables the geometric analysis.</short_desc>
-						  <long_desc>
-						    This switch enables/disables the geometric analysis.
-						  </long_desc>
-						</boolopt>
-						<multiopt>
-						  <name>Encoding methodology used</name>
-						  <alias>geom-encoding</alias>
-						  <default>Geom</default>
-						  <short_desc>Encoding methodology</short_desc>
-						  <long_desc>
-						    This switch specifies the encoding methodology used in the analysis. 
-						    All possible options are: Geom, HeapIns, PtIns. The efficiency order
-						    is (from slow to fast) Geom - HeapIns - PtIns, but the precision order is
-						    the reverse.
-						  </long_desc>        					
-						  <value>
-						    <name>Geometric</name>
-						    <alias>Geom</alias>
-						    <short_desc>Geometric Encoding</short_desc>
-						    <long_desc>
-						      Geometric Encoding.
-						    </long_desc>
-						    <default/>
-						  </value>
-						  <value>
-						    <name>Heap Insensitive</name>
-						    <alias>HeapIns</alias>
-						    <short_desc>Heap Insensitive Encoding</short_desc>
-						    <long_desc>
-						      Heap Insensitive Encoding. Omit the heap context range term in the encoded representation, and in turn, we assume all the contexts for this heap object are used.
-						    </long_desc>
-						  </value>
-						  <value>
-						    <name>Pointer Insensitive</name>
-						    <alias>PtIns</alias>
-						    <short_desc>PtIns</short_desc>
-						    <long_desc>
-						      Pointer Insensitive Encoding. Similar to HeapIns, but we omit the pointer context range term.
-						    </long_desc>
-						  </value>
-						</multiopt>
-						
-						<multiopt>
-						  <name>Worklist type</name>
-						  <alias>geom-worklist</alias>
-						  <default>PQ</default>
-						  <short_desc>Worklist type</short_desc>
-						  <long_desc>
-						    Specifies the worklist used for selecting the next propagation pointer. All possible options are: PQ, FIFO. They stand for the priority queue (sorted by the last fire time and topology order) and FIFO queue.
-						  </long_desc>        					
-						  <value>
-						    <name>Priority Queue</name>
-						    <alias>PQ</alias>
-						    <short_desc>Priority Queue</short_desc>
-						    <long_desc>
-						      Priority Queue (sorted by the last fire time and topology order)
-						    </long_desc>
-						    <default/>
-						  </value>
-						  <value>
-						    <name>FIFO Queue</name>
-						    <alias>FIFO</alias>
-						    <short_desc>FIFO Queue</short_desc>
-						    <long_desc>
-						      FIFO Queue
-						    </long_desc>
-						  </value>
-						</multiopt>						
-						
-						<stropt>
-						  <name>Verbose dump file</name>
-						  <alias>geom-dump-verbose</alias>
-						  <default></default>
-						  <set_arg_label>name</set_arg_label>
-						  <short_desc>Filename for detailed execution log</short_desc>
-						  <long_desc>
-						    If you want to persist the detailed execution information for future analysis, please provide a file name.
-						  </long_desc>
-						</stropt>
-						
-						<stropt>
-						  <name>Verification file</name>
-						  <alias>geom-verify-name</alias>
-						  <default></default>
-						  <set_arg_label>path</set_arg_label>
-						  <short_desc>Filename for verification file</short_desc>
-						  <long_desc>
-						    If you want to compare the precision of the points-to results with other solvers (e.g. Paddle), you can use the 'verify-file' to specify the list of methods (soot method signature format) that are reachable by that solver. Then, in the internal evaluations (see the switch geom-eval), we only consider the methods that are present to both solvers.
-						  </long_desc>
-						</stropt>
-						
-						<intopt>
-						  <name>Precision evaluation methodologies</name>
-						  <alias>geom-eval</alias>
-						  <default>0</default>
-						  <short_desc>Precision evaluation methodologies</short_desc>
-						  <long_desc>
-						    We internally provide some precision evaluation methodologies, and classify the evaluation strength into three levels. If level is 0, we do nothing. If level is 1, we report the basic information about the points-to result. If level is 2, we perform the virtual callsite resolution, static cast safety and all alias pairs evaluations.
-						  </long_desc>
-						</intopt>
-						
-						<boolopt>
-						  <name>Transform to context-insensitive result</name>
-						  <alias>geom-trans</alias>
-						  <default>false</default>
-						  <short_desc>Transform to context-insensitive result</short_desc>
-						  <long_desc>
-						    If your work only concern the context insensitive points-to information, you can use this option to transform the context sensitive result to insensitive result. Or, sometimes your code wants to directly access to the points-to vector other than using the standard querying interface, you can use this option to guarantee the correct behavior (because we clear the SPARK points-to result when running the geom solver). After the transformation, the context sensitive points-to result is cleared in order to save memory space for your other jobs.
-						  </long_desc>
-						</boolopt>		
-						
-						<intopt>
-						  <name>Fractional parameter</name>
-						  <alias>geom-frac-base</alias>
-						  <default>40</default>
-						  <short_desc>Fractional parameter for precision/performance trade-off</short_desc>
-						  <long_desc>
-						    This option specifies the fractional parameter, which is used to manually tune the precision and performance trade-off. The smaller the value, the better the performance but the worse the precision.
-						  </long_desc>
-						</intopt>	
-						
-						<boolopt>
-						  <name>Blocking strategy for recursive calls</name>
-						  <alias>geom-blocking</alias>
-						  <default>true</default>
-						  <short_desc>Enable blocking strategy for recursive calls</short_desc>
-						  <long_desc>
-						    When this option is on, we perform the blocking strategy to the recursive calls. This strategy significantly improves the precision. The details are presented in our paper.
-						  </long_desc>
-						</boolopt>		
-						
-						<intopt>
-						  <name>Iterations</name>
-						  <alias>geom-runs</alias>
-						  <default>1</default>
-						  <short_desc>Iterations of analysis</short_desc>
-						  <long_desc>
-						    We can run multiple times of the geometric analysis to continuously improve the analysis precision.
-						  </long_desc>
-						</intopt>
-						
--->																					
 					</section>
 				</sub_phase>
 				<sub_phase>
@@ -2574,15 +2170,6 @@ to be used in Paddle.
 Turns on JeddProfiler for profiling BDD operations.
         </long_desc>
 						</boolopt>
-						<boolopt>
-							<name>Verbose GC</name>
-							<alias>verbosegc</alias>
-							<default>false</default>
-                                                        <short_desc>Print memory usage at each BDD garbage collection.</short_desc>
-							<long_desc>
-Print memory usage at each BDD garbage collection.
-        </long_desc>
-						</boolopt>
 						<multiopt>
 							<name>Worklist Implementation</name>
 							<alias>q</alias>
@@ -2647,19 +2234,9 @@ Select the implementation of worklists to be used in Paddle.
 							<name>Backend</name>
 							<alias>backend</alias>
 							<value>
-								<name>Select Automatically</name>
-								<alias>auto</alias>
-								<default/>
-<short_desc>Select backend based on bdd option</short_desc>
-<long_desc>
-When the bdd option is true, the BuDDy backend will be used.
-When the bdd option is false, the backend will be set to none, to avoid
-loading any BDD backend.
-</long_desc>
-							</value>
-							<value>
 								<name>BuDDy</name>
 								<alias>buddy</alias>
+								<default/>
 <short_desc>BuDDy backend</short_desc>
 <long_desc>
 Use BuDDy implementation of BDDs.
@@ -2701,18 +2278,6 @@ Don't use any BDD backend. Any attempted use of BDDs will cause Paddle to crash.
 This option tells Paddle which implementation of BDDs to use.
         </long_desc>
 						</multiopt>
-						<intopt>
-							<name>BDD Nodes</name>
-							<alias>bdd-nodes</alias>
-							<default>0</default>
-                                                        <short_desc>Number of BDD nodes to allocate (0=unlimited)</short_desc>
-							<long_desc>
-This option specifies the number of BDD nodes to be used by the BDD backend.
-A value of 0 causes the backend to start with one million nodes, and allocate
-more as required. A value other than zero causes the backend to start with
-the specified size, and prevents it from ever allocating any more nodes.
-        </long_desc>
-						</intopt>
 						<boolopt>
 							<name>Ignore Types Entirely</name>
 							<alias>ignore-types</alias>
@@ -2799,15 +2364,6 @@ context string, the context string is just reused as is.
 </long_desc>
 
                                         </value>
-                                        <value>
-                                                <name>Thread k-Object Sensitive</name>
-                                                <alias>threadkobjsens</alias>
-<short_desc>Experimental option for thread-entry-point sensitivity</short_desc>
-<long_desc>
-Experimental option for thread-entry-point sensitivity.
-</long_desc>
-
-                                        </value>
                                         <short_desc>Select context-sensitivity level</short_desc>
                                         <long_desc>
 This option tells Paddle which level of context-sensitivity to use in constructing the call graph.
@@ -2880,8 +2436,7 @@ used as the elements of the points-to sets.
 							<long_desc>
 When this option is set to true, all allocation sites creating
 <tt>java.lang.StringBuffer</tt> objects are grouped together as a single
-allocation site. Allocation sites creating a <tt>java.lang.StringBuilder</tt>
-object are also grouped together as a single allocation site.
+allocation site.
         </long_desc>
 						</boolopt>
 						<boolopt>
@@ -3063,15 +2618,6 @@ an algorithm based on the merge step from merge sort.
 </long_desc>
 							</value>
 							<value>
-								<name>Heintze</name>
-								<alias>heintze</alias>
-								<short_desc>Heintze's shared bit-vector and overflow list representation</short_desc>
-								<long_desc>Heintze's representation has elements represented by a bit-vector + a small
-									'overflow' list of some maximum number of elements.  The bit-vectors can be shared
-									by multiple points-to sets, while the overflow lists are not.
-								</long_desc>
-							</value>
-							<value>
 								<name>Double</name>
 								<alias>double</alias>
 								<default/>
@@ -3132,16 +2678,7 @@ binary search, and set union and intersection are computed using
 an algorithm based on the merge step from merge sort.
 </long_desc>
 							</value>
-   							<value>
-								<name>Heintze</name>
-								<alias>heintze</alias>
-								<short_desc>Heintze's shared bit-vector and overflow list representation</short_desc>
-								<long_desc>Heintze's representation has elements represented by a bit-vector + a small
-									'overflow' list of some maximum number of elements.  The bit-vectors can be shared
-									by multiple points-to sets, while the overflow lists are not.
-								</long_desc>
-							</value>
-                                                     <short_desc>Select implementation of points-to set for old part of double set</short_desc>
+                                                        <short_desc>Select implementation of points-to set for old part of double set</short_desc>
 							<long_desc>
 Select an implementation for sets of old objects in the double
 points-to set implementation.
@@ -3191,16 +2728,7 @@ binary search, and set union and intersection are computed using
 an algorithm based on the merge step from merge sort.
 </long_desc>
 							</value>
-   							<value>
-								<name>Heintze</name>
-								<alias>heintze</alias>
-								<short_desc>Heintze's shared bit-vector and overflow list representation</short_desc>
-								<long_desc>Heintze's representation has elements represented by a bit-vector + a small
-									'overflow' list of some maximum number of elements.  The bit-vectors can be shared
-									by multiple points-to sets, while the overflow lists are not.
-								</long_desc>
-							</value>
-                                                     <short_desc>Select implementation of points-to set for new part of double set</short_desc>
+                                                        <short_desc>Select implementation of points-to set for new part of double set</short_desc>
 							<long_desc>
 Select an implementation for sets of new objects in the double
 points-to set implementation.
@@ -3317,172 +2845,58 @@ Soot can perform whole-program analyses.  In whole-program mode,
 Soot applies the contents of the Whole-Jimple Transformation Pack
 to the scene as a whole after constructing a call graph for the
 program.</p>
+<p>
+In an unmodified copy of Soot the Whole-Jimple Transformation
+Pack is empty.</p>
                         </long_desc>
 				<boolopt>
 					<name>Enabled</name>
 					<alias>enabled</alias>
-					<default>true</default>
+                                        <default>true</default>
 					<short_desc/>
 					<long_desc/>
 				</boolopt>
 				<sub_phase>
-					<name>May Happen in Parallel Analyses</name>
-					<class>MhpTransformer</class>
-					<alias>wjtp.mhp</alias>
-					<short_desc>Determines what statements may be run concurrently</short_desc>
-<long_desc>
-May Happen in Parallel (MHP) Analyses determine what program statements may
-be run by different threads concurrently.  This phase does not perform any
-transformation.
-</long_desc>
+					<name>Heap Reference Analysis [AK]</name>
+					<class>HraOptions</class>
+					<alias>wjtp.hra</alias>
+					<short_desc>Emit HRA statistics and debug information</short_desc>
+					<long_desc>
+Heap Reference Analysis is implemented by Amey Karkare and is based on the paper
+\"Heap Reference Analysis using Access Graphs\"  by Uday Khedker, Amitabha Sanyal
+and Amey Karkare.
+		                        </long_desc>
 					<boolopt>
-						<name>Enabled</name>
-						<alias>enabled</alias>
-						<default>false</default>
-						<short_desc/>
-						<long_desc/>
-					</boolopt>
-				</sub_phase>
-				<sub_phase>
-					<name>Lock Allocator</name>
-					<class>LockAllocator</class>
-					<alias>wjtp.tn</alias>
-					<short_desc>Finds critical sections, allocates locks</short_desc>
-<long_desc>
-The Lock Allocator finds critical sections (synchronized regions)
-in Java programs and assigns locks for execution on both
-optimistic and pessimistic JVMs.  It can also be used to analyze the existing
-locks.
-</long_desc>
-					<boolopt>
-						<name>Enabled</name>
-						<alias>enabled</alias>
-						<default>false</default>
-						<short_desc/>
-						<long_desc/>
-					</boolopt>
-					<multiopt>
-						<name>Locking Scheme</name>
-						<alias>locking-scheme</alias>
-						<set_arg_label>granularity</set_arg_label>
-						<short_desc>Selects the granularity of the generated lock allocation</short_desc>
-						<long_desc>Selects the granularity of the generated lock allocation</long_desc>
-<!--						<value>
-							<name>Fine Grained</name>
-							<alias>fine-grained</alias>
-							<short_desc>Use multiple runtime objects for synchronization</short_desc>
-							<long_desc>
-Try to identify transactional regions that can employ fine-grained locking to
-increase parallelism.  All side effects must be protected by a single object.
-This locking scheme aims to achieve simple fine-grained locking. 
-</long_desc>
-						</value> -->
-						<value>
-							<name>Medium Grained</name>
-							<alias>medium-grained</alias>
-							<short_desc>Use a runtime object for synchronization where possible</short_desc>
-							<long_desc>
-Try to identify transactional regions that can employ a dynamic lock to
-increase parallelism.  All side effects must be protected by a single object.
-This locking scheme aims to approximate typical Java Monitor usage.
-</long_desc>
-							<default/>
-						</value>
-						<value>
-							<name>Coarse Grained</name>
-							<alias>coarse-grained</alias>
-							<short_desc>Use static objects for synchronization</short_desc>
-							<long_desc>
-Insert static objects into the program for synchronization.  One object will be
-used for each group of conflicting synchronized regions.  This locking scheme
-achieves code-level locking.
-</long_desc>
-						</value>
-						<value>
-							<name>Single Static Lock</name>
-							<alias>single-static</alias>
-							<short_desc>Use just one static synchronization object for all transactional regions</short_desc>
-							<long_desc>
-Insert one static object into the program for synchronization for all
-transactional regions.  This locking scheme is for research purposes.
-</long_desc>
-						</value>
-						<value>
-							<name>Leave Original Locks</name>
-							<alias>leave-original</alias>
-							<short_desc>Analyse the existing lock structure without making changes</short_desc>
-							<long_desc>
-Analyse the existing lock structure of the program, but do not change it.  With
-one of the print options, this can be useful for comparison between the original
-program and one of the generated locking schemes.
-</long_desc>
-						</value>
-					</multiopt>
-					<boolopt>
-						<name>Perform Deadlock Avoidance</name>
-						<alias>avoid-deadlock</alias>
-						<default>true</default>
-						<short_desc>Perform Deadlock Avoidance</short_desc>
-<long_desc>
-Perform Deadlock Avoidance by enforcing a lock ordering where necessary.
-</long_desc>
+					  <name>Enabled</name>
+					  <alias>enabled</alias>
+					  <default>false</default>
 					</boolopt>
 					<boolopt>
-						<name>Use Open Nesting</name>
-						<alias>open-nesting</alias>
-						<default>true</default>
-						<short_desc>Use an open nesting model</short_desc>
-<long_desc>
-Use an open nesting model, where inner transactions are allowed to commit
-independently of any outer transaction.
-</long_desc>
+					  <name>Trace Explicit Liveness Analysis</name>
+					  <alias>trace-explive</alias>
+					  <default>false</default>
 					</boolopt>
 					<boolopt>
-						<name>Perform May-Happen-in-Parallel Analysis</name>
-						<alias>do-mhp</alias>
-						<default>true</default>
-						<short_desc>Perform a May-Happen-in-Parallel analysis</short_desc>
-<long_desc>
-Perform a May-Happen-in-Parallel analysis to assist in allocating locks.
-</long_desc>
+					  <name>Trace Alias Analysis</name>
+					  <alias>trace-alias</alias>
+					  <default>false</default>
 					</boolopt>
 					<boolopt>
-						<name>Perform Local Objects Analysis</name>
-						<alias>do-tlo</alias>
-						<default>true</default>
-						<short_desc>Perform a Local-Objects analysis</short_desc>
-<long_desc>
-Perform a Local-Objects analysis to assist in allocating locks.
-</long_desc>
+					  <name>Alias Analysis for Arrays?</name>
+					  <alias>array-aliases</alias>
+					  <default>false</default>
 					</boolopt>
 					<boolopt>
-						<name>Print Topological Graph</name>
-						<alias>print-graph</alias>
-						<default>false</default>
-						<short_desc>Print topological graph of transactions</short_desc>
-<long_desc>
-Print a topological graph of the program's transactions in the format used by the graphviz package.
-</long_desc>
+					  <name>Dump HRA Statistics</name>
+					  <alias>print-stats</alias>
+					  <default>false</default>
 					</boolopt>
 					<boolopt>
-						<name>Print Table</name>
-						<alias>print-table</alias>
-						<default>false</default>
-						<short_desc>Print table of transactions</short_desc>
-<long_desc>
-Print a table of information about the program's transactions.
-</long_desc>
+					  <name>Be (quite) verbose</name>
+					  <alias>verbose</alias>
+					  <default>false</default>
 					</boolopt>
-					<boolopt>
-						<name>Print Debugging Info</name>
-						<alias>print-debug</alias>
-						<default>false</default>
-						<short_desc>Print debugging info</short_desc>
-<long_desc>
-Print debugging info, including every statement visited.
-</long_desc>
-					</boolopt>
-				</sub_phase>
+					</sub_phase>
 			</phase>
 			<phase>
 				<name>Whole-Jimple Optimization Pack</name>
@@ -3863,18 +3277,12 @@ Alexandru Salcianu and Martin Rinard.
 		       <default>true</default>
 		    </boolopt>
    	   	    <boolopt>
-  		       <name>Annotate class files</name>
-			   <short_desc>Marks pure methods with a purity bytecode attribute</short_desc>
-		       <alias>annotate</alias>
-		       <default>true</default>
-		    </boolopt>
-   	   	    <boolopt>
   		       <name>Be (quite) verbose</name>
 		       <alias>verbose</alias>
 		       <default>false</default>
 		    </boolopt>
                 </sub_phase>
-			</phase>
+      </phase>
       <phase>
         <name>Shimple Control</name>
         <alias>shimple</alias>
@@ -4025,6 +3433,42 @@ transformations in an unmodified version of Soot.
 					<alias>enabled</alias>
                                         <default>true</default>
 				</boolopt>
+				<sub_phase>
+					<name>Heap Reference Analysis [AK]</name>
+					<class>NullInsOptions</class>
+					<alias>jtp.ni</alias>
+					<short_desc>Emit HRA statistics and debug information</short_desc>
+					<long_desc>
+Heap Reference Analysis/Null Inserter is implemented by Amey Karkare and is based on the paper
+\"Heap Reference Analysis using Access Graphs\"  by Uday Khedker, Amitabha Sanyal
+and Amey Karkare.
+		                        </long_desc>
+					<boolopt>
+					  <name>Enabled</name>
+					  <alias>enabled</alias>
+					  <default>false</default>
+					</boolopt>
+					<boolopt>
+					  <name>Trace Null Insertion</name>
+					  <alias>trace-nullins</alias>
+					  <default>false</default>
+					</boolopt>
+					<boolopt>
+					  <name>Actually Insert Null Statements</name>
+					  <alias>insert-null</alias>
+					  <default>false</default>
+					</boolopt>
+					<boolopt>
+					  <name>Dump HRA Statistics</name>
+					  <alias>print-stats</alias>
+					  <default>false</default>
+					</boolopt>
+					<boolopt>
+					  <name>Be (quite) verbose</name>
+					  <alias>verbose</alias>
+					  <default>false</default>
+					</boolopt>
+					</sub_phase>
 			</phase>
 			<phase>
 				<name>Jimple Optimization Pack</name>
@@ -4364,25 +3808,6 @@ Only tag dead assignment statements instead of eliminaing them.
 Only eliminate dead assignments to locals that represent stack
 locations in the original bytecode.
 </long_desc>
-					</boolopt>
-				</sub_phase>
-				<sub_phase>
-					<name>Null Check Eliminator</name>
-					<alias>jop.nce</alias>
-					<short_desc>Null Check Eliminator</short_desc>
-					<long_desc>
-Replaces statements 'if(x!=null) goto y' with 'goto y' if x is
-known to be non-null or with 'nop' if it is known to be null,
-etc. Generates dead code and is hence followed by unreachable
-code elimination. Disabled by default because it can be
-expensive on methods with many locals.
-</long_desc>
-					<boolopt>
-						<name>Enabled</name>
-						<alias>enabled</alias>
-                        <default>false</default>
-						<short_desc/>
-						<long_desc/>
 					</boolopt>
 				</sub_phase>
 				<sub_phase>
@@ -5458,21 +4883,6 @@ Options provided by Dava are added to this dummy phase so as not to clutter the 
 					<short_desc/>
 					<long_desc/>
 				</boolopt>
-				
-				
-				<boolopt>
-					<name>Source</name>
-
-					<alias>source-is-javac</alias>
-                    <default>true</default>
-					<short_desc/>
-					<long_desc>
-					check out soot.dava.toolkits.base.misc.ThrowFinder
-					In short we want to ensure that if there are throw exception info in the class file dava uses this info.					
-					</long_desc>
-				</boolopt>
-				
-				
 				<sub_phase>
 					<name>Transformations</name>
 					<alias>db.transformations</alias>
@@ -5504,7 +4914,18 @@ Options provided by Dava are added to this dummy phase so as not to clutter the 
 
 					<default>false</default>
 				</boolopt>
-                </sub_phase>
+
+				<boolopt>
+					<name>Remove Fully Qualified Names</name>
+					<alias>remove-fully-qualified</alias>
+                                         <short_desc>Convert fully qualified names to smaller names</short_desc>
+                                         <long_desc>The conversion works to remove java.lang. from java.lang.String etc.
+                        However this might not always be correct and might cause recompilability errors in which case the flag
+should be turned off.</long_desc>
+					<default>false</default>
+				</boolopt>
+
+                               </sub_phase>
 
 
 
@@ -5833,7 +5254,6 @@ package option multiple times.</p>
 		<boolopt>
 			<name>Keep Line Number</name>
 			<alias>keep-line-number</alias>
-			<default>true</default>
 			<short_desc>Keep line number tables</short_desc>
 			<long_desc>
 Preserve line number tables for class files throughout the
